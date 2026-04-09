@@ -1,0 +1,2346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação - Sistema de Logger Delphi</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --debug-color: #8b5cf6;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --code-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .navbar-version {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 280px;
+            height: calc(100vh - 60px);
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 0 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 0.5rem 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-link:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), transparent);
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            margin-top: 60px;
+            padding: 2rem 3rem;
+            max-width: 1200px;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .section-description {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            background: #334155;
+            color: #94a3b8;
+            padding: 0.5rem 1rem;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-lang {
+            font-weight: 600;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #475569;
+            color: white;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 0 0 8px 8px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #c792ea; }
+        .string { color: #c3e88d; }
+        .comment { color: #676e95; font-style: italic; }
+        .type { color: #ffcb6b; }
+        .function { color: #82aaff; }
+        .number { color: #f78c6c; }
+        .operator { color: #89ddff; }
+
+        /* Inline code */
+        p code, li code, td code {
+            background: #e2e8f0;
+            color: #d6336c;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-color);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        tr:hover {
+            background: var(--bg-color);
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--bg-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon.file { background: #dbeafe; color: #2563eb; }
+        .card-icon.email { background: #fef3c7; color: #d97706; }
+        .card-icon.push { background: #d1fae5; color: #059669; }
+        .card-icon.custom { background: #ede9fe; color: #7c3aed; }
+
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-debug { background: #ede9fe; color: #7c3aed; }
+        .badge-info { background: #dbeafe; color: #2563eb; }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-error { background: #fee2e2; color: #dc2626; }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .alert-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            color: #166534;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            color: white;
+            overflow-x: auto;
+        }
+
+        .diagram-layer {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .diagram-layer-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram-components {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .diagram-component {
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .diagram-arrow {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            margin: 0.25rem 0;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-check {
+            width: 24px;
+            height: 24px;
+            background: #d1fae5;
+            color: #059669;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+        }
+
+        .step {
+            position: relative;
+            padding-left: 3.5rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid var(--border-color);
+            margin-left: 1rem;
+        }
+
+        .step:last-child {
+            border-left-color: transparent;
+            padding-bottom: 0;
+        }
+
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: -1.25rem;
+            top: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-content {
+            color: var(--text-muted);
+        }
+
+        /* JSON Preview */
+        .json-preview {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .json-key { color: #7dd3fc; }
+        .json-string { color: #86efac; }
+        .json-number { color: #fca5a5; }
+        .json-null { color: #94a3b8; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-content {
+                padding: 1rem;
+            }
+            .section {
+                padding: 1.5rem;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print */
+        @media print {
+            .sidebar, .navbar {
+                display: none;
+            }
+            .main-content {
+                margin: 0;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <h1>📋 Logger System - Delphi</h1>
+            <span class="navbar-version">v1.0.0</span>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Introdução</div>
+            <a href="#overview" class="sidebar-link active">Visão Geral</a>
+            <a href="#architecture" class="sidebar-link">Arquitetura</a>
+            <a href="#installation" class="sidebar-link">Instalação</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Guia de Uso</div>
+            <a href="#quickstart" class="sidebar-link">Quick Start</a>
+            <a href="#log-levels" class="sidebar-link">Níveis de Log</a>
+            <a href="#handlers" class="sidebar-link">Handlers</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Handlers</div>
+            <a href="#file-handler" class="sidebar-link">File Handler</a>
+            <a href="#email-handler" class="sidebar-link">Email Handler</a>
+            <a href="#push-handler" class="sidebar-link">Push Notification</a>
+            <a href="#custom-handler" class="sidebar-link">Handler Customizado</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Avançado</div>
+            <a href="#configuration" class="sidebar-link">Configuração</a>
+            <a href="#threading" class="sidebar-link">Threading</a>
+            <a href="#memory" class="sidebar-link">Gerenciamento de Memória</a>
+            <a href="#patterns" class="sidebar-link">Design Patterns</a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-title">Referência</div>
+            <a href="#api-reference" class="sidebar-link">API Reference</a>
+            <a href="#json-format" class="sidebar-link">Formato JSON</a>
+            <a href="#troubleshooting" class="sidebar-link">Troubleshooting</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Overview Section -->
+        <section id="overview" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📋</span>
+                Visão Geral
+            </h2>
+            <p class="section-description">
+                Sistema de logging profissional para Delphi, projetado com foco em performance, 
+                extensibilidade e robustez. Suporta múltiplos destinos de log com processamento 
+                assíncrono em background.
+            </p>
+
+            <ul class="feature-list">
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Processamento Assíncrono</strong> - Logs processados em thread separada sem bloquear a aplicação</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Múltiplos Handlers</strong> - Arquivo, Email, Push Notification e extensível</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Formato JSON</strong> - Logs estruturados para fácil análise e integração</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Thread-Safe</strong> - Sincronização robusta para ambientes multi-thread</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Zero Memory Leaks</strong> - Gerenciamento automático via interfaces</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Rotação de Arquivos</strong> - Controle automático de tamanho dos logs</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Filtro por Nível</strong> - Configure quais níveis cada handler processa</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Clean Architecture</strong> - Código limpo seguindo SOLID e Design Patterns</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🏗️</span>
+                Arquitetura
+            </h2>
+            <p class="section-description">
+                O sistema segue uma arquitetura em camadas com separação clara de responsabilidades,
+                utilizando padrões de projeto consagrados.
+            </p>
+
+            <div class="architecture-diagram">
+                <div class="diagram-layer">
+                    <div class="diagram-layer-title">Application Layer</div>
+                    <div class="diagram-components">
+                        <span class="diagram-component">TLogger.Instance</span>
+                        <span class="diagram-component">TLoggerFactory</span>
+                    </div>
+                </div>
+                <div class="diagram-arrow">▼</div>
+                <div class="diagram-layer">
+                    <div class="diagram-layer-title">Facade Layer</div>
+                    <div class="diagram-components">
+                        <span class="diagram-component">TLoggerFacade</span>
+                    </div>
+                </div>
+                <div class="diagram-arrow">▼</div>
+                <div class="diagram-layer">
+                    <div class="diagram-layer-title">Dispatcher Layer (Observer Pattern)</div>
+                    <div class="diagram-components">
+                        <span class="diagram-component">TLogDispatcher</span>
+                    </div>
+                </div>
+                <div class="diagram-arrow">▼</div>
+                <div class="diagram-layer">
+                    <div class="diagram-layer-title">Handler Layer (Strategy Pattern)</div>
+                    <div class="diagram-components">
+                        <span class="diagram-component">TFileHandler</span>
+                        <span class="diagram-component">TEmailHandler</span>
+                        <span class="diagram-component">TPushHandler</span>
+                    </div>
+                </div>
+                <div class="diagram-arrow">▼</div>
+                <div class="diagram-layer">
+                    <div class="diagram-layer-title">Infrastructure Layer</div>
+                    <div class="diagram-components">
+                        <span class="diagram-component">TLogQueue</span>
+                        <span class="diagram-component">TLogWorkerThread</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Responsabilidade</th>
+                            <th>Padrão</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>TLogger</code></td>
+                            <td>Interface principal e gerenciamento do ciclo de vida</td>
+                            <td>Singleton, Facade</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLogDispatcher</code></td>
+                            <td>Distribuição de logs para handlers registrados</td>
+                            <td>Observer</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLogQueue</code></td>
+                            <td>Fila thread-safe para armazenamento temporário</td>
+                            <td>Producer-Consumer</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLogWorkerThread</code></td>
+                            <td>Processamento assíncrono em background</td>
+                            <td>Worker Thread</td>
+                        </tr>
+                        <tr>
+                            <td><code>ILogHandler</code></td>
+                            <td>Contrato para implementação de handlers</td>
+                            <td>Strategy</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLoggerFactory</code></td>
+                            <td>Criação de instâncias de logger e handlers</td>
+                            <td>Factory</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="installation" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📦</span>
+                Instalação
+            </h2>
+            <p class="section-description">
+                Siga os passos abaixo para adicionar o sistema de logger ao seu projeto Delphi.
+            </p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-title">Copiar os arquivos fonte</div>
+                    <div class="step-content">
+                        <p>Copie todos os arquivos da pasta <code>Logger/</code> para seu projeto:</p>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span class="code-lang">Estrutura de Arquivos</span>
+                            </div>
+                            <pre><code>Logger/
+├── Logger.Types.pas
+├── Logger.Interfaces.pas
+├── Logger.Entry.pas
+├── Logger.Queue.pas
+├── Logger.Worker.pas
+├── Logger.Handlers.Base.pas
+├── Logger.Handlers.File.pas
+├── Logger.Handlers.Email.pas
+├── Logger.Handlers.PushNotification.pas
+├── Logger.Dispatcher.pas
+├── Logger.Facade.pas
+└── Logger.Factory.pas</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">Adicionar ao Search Path</div>
+                    <div class="step-content">
+                        <p>No Delphi IDE, vá em <strong>Project → Options → Delphi Compiler → Search Path</strong> e adicione o diretório dos arquivos.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">Adicionar dependências (para Email Handler)</div>
+                    <div class="step-content">
+                        <p>Se utilizar o handler de email, certifique-se de ter os componentes <strong>Indy</strong> instalados.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">Incluir units no projeto</div>
+                    <div class="step-content">
+                        <div class="code-container">
+                            <div class="code-header">
+                                <span class="code-lang">Delphi</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                            </div>
+                            <pre><code><span class="keyword">uses</span>
+  Logger.Types,
+  Logger.Interfaces,
+  Logger.Facade,
+  Logger.Factory;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section id="quickstart" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🚀</span>
+                Quick Start
+            </h2>
+            <p class="section-description">
+                Comece a usar o logger em minutos com estes exemplos práticos.
+            </p>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'basic-tab')">Uso Básico</button>
+                <button class="tab" onclick="switchTab(event, 'singleton-tab')">Singleton</button>
+                <button class="tab" onclick="switchTab(event, 'multihandler-tab')">Múltiplos Handlers</button>
+                <button class="tab" onclick="switchTab(event, 'extradata-tab')">Dados Extras</button>
+            </div>
+
+            <div id="basic-tab" class="tab-content active">
+                <h3>Uso Básico</h3>
+                <p>A forma mais simples de começar a usar o logger:</p>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-lang">Delphi</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    <pre><code><span class="keyword">program</span> BasicLoggerDemo;
+
+<span class="keyword">uses</span>
+  Logger.Types,
+  Logger.Interfaces,
+  Logger.Factory;
+
+<span class="keyword">var</span>
+  Logger: ILogger;
+<span class="keyword">begin</span>
+  <span class="comment">// Cria logger com handler de arquivo padrão</span>
+  Logger := TLoggerFactory.CreateDefaultLogger;
+  
+  <span class="comment">// Registra mensagens de diferentes níveis</span>
+  Logger.Debug(<span class="string">'Iniciando processamento'</span>);
+  Logger.Info(<span class="string">'Usuário autenticado com sucesso'</span>);
+  Logger.Warning(<span class="string">'Cache próximo do limite'</span>);
+  Logger.Error(<span class="string">'Falha na conexão com banco de dados'</span>);
+  
+  <span class="comment">// Aguarda processamento antes de encerrar</span>
+  Logger.Flush;
+  Logger.Shutdown;
+<span class="keyword">end</span>.</code></pre>
+                </div>
+            </div>
+
+            <div id="singleton-tab" class="tab-content">
+                <h3>Usando Singleton</h3>
+                <p>Acesse a mesma instância do logger de qualquer lugar da aplicação:</p>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-lang">Delphi</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    <pre><code><span class="keyword">unit</span> MyBusinessUnit;
+
+<span class="keyword">interface</span>
+
+<span class="keyword">procedure</span> ProcessOrder(OrderId: Integer);
+
+<span class="keyword">implementation</span>
+
+<span class="keyword">uses</span>
+  Logger.Facade;
+
+<span class="keyword">procedure</span> ProcessOrder(OrderId: Integer);
+<span class="keyword">begin</span>
+  <span class="comment">// Acessa singleton de qualquer lugar</span>
+  TLogger.Instance.Info(
+    Format(<span class="string">'Processando pedido #%d'</span>, [OrderId]),
+    <span class="string">'Orders'</span>  <span class="comment">// Categoria</span>
+  );
+  
+  <span class="keyword">try</span>
+    <span class="comment">// ... lógica de negócio ...</span>
+    TLogger.Instance.Debug(<span class="string">'Pedido validado'</span>, <span class="string">'Orders'</span>);
+  <span class="keyword">except</span>
+    <span class="keyword">on</span> E: Exception <span class="keyword">do</span>
+    <span class="keyword">begin</span>
+      TLogger.Instance.Error(
+        Format(<span class="string">'Erro no pedido #%d: %s'</span>, [OrderId, E.Message]),
+        <span class="string">'Orders'</span>
+      );
+      <span class="keyword">raise</span>;
+    <span class="keyword">end</span>;
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">end</span>.</code></pre>
+                </div>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">💡</span>
+                    <div>
+                        <strong>Dica:</strong> O singleton é inicializado automaticamente no primeiro acesso. 
+                        Lembre-se de chamar <code>TLogger.ReleaseInstance</code> ao finalizar a aplicação.
+                    </div>
+                </div>
+            </div>
+
+            <div id="multihandler-tab" class="tab-content">
+                <h3>Múltiplos Handlers</h3>
+                <p>Configure diferentes destinos para seus logs:</p>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-lang">Delphi</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    <pre><code><span class="keyword">procedure</span> ConfigureLogger;
+<span class="keyword">var</span>
+  Logger: ILogger;
+  FileHandler: ILogHandler;
+  EmailHandler: ILogHandler;
+  PushHandler: ILogHandler;
+<span class="keyword">begin</span>
+  Logger := TLogger.Instance;
+  
+  <span class="comment">// Handler de arquivo - todos os níveis</span>
+  FileHandler := TLoggerFactory.CreateFileHandler(
+    <span class="string">'C:\Logs\myapp.log'</span>,
+    ALL_LOG_LEVELS
+  );
+  Logger.RegisterHandler(FileHandler);
+  
+  <span class="comment">// Handler de email - apenas Warning e Error</span>
+  EmailHandler := TLoggerFactory.CreateEmailHandler(
+    <span class="string">'smtp.empresa.com'</span>,      <span class="comment">// Host SMTP</span>
+    <span class="number">587</span>,                        <span class="comment">// Porta</span>
+    <span class="string">'sistema@empresa.com'</span>,     <span class="comment">// Usuário</span>
+    <span class="string">'senha123'</span>,                <span class="comment">// Senha</span>
+    <span class="string">'noreply@empresa.com'</span>,     <span class="comment">// Remetente</span>
+    [<span class="string">'admin@empresa.com'</span>],     <span class="comment">// Destinatários</span>
+    True,                        <span class="comment">// Usar SSL</span>
+    [llWarning, llError]         <span class="comment">// Níveis habilitados</span>
+  );
+  Logger.RegisterHandler(EmailHandler);
+  
+  <span class="comment">// Handler de push - apenas Error</span>
+  PushHandler := TLoggerFactory.CreatePushHandler(
+    <span class="string">'https://api.pushserver.com/send'</span>,
+    <span class="string">'API_KEY_123'</span>,
+    <span class="string">'MinhaApp'</span>,
+    <span class="number">30000</span>,
+    [llError]
+  );
+  Logger.RegisterHandler(PushHandler);
+<span class="keyword">end</span>;</code></pre>
+                </div>
+            </div>
+
+            <div id="extradata-tab" class="tab-content">
+                <h3>Logs com Dados Extras</h3>
+                <p>Adicione informações contextuais aos seus logs:</p>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-lang">Delphi</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                    </div>
+                    <pre><code><span class="keyword">procedure</span> LogUserAction(UserId: Integer; <span class="keyword">const</span> Action, IP: <span class="keyword">string</span>);
+<span class="keyword">var</span>
+  ExtraData: TJSONObject;
+<span class="keyword">begin</span>
+  ExtraData := TJSONObject.Create;
+  <span class="keyword">try</span>
+    <span class="comment">// Adiciona dados contextuais</span>
+    ExtraData.AddPair(<span class="string">'user_id'</span>, TJSONNumber.Create(UserId));
+    ExtraData.AddPair(<span class="string">'action'</span>, Action);
+    ExtraData.AddPair(<span class="string">'ip_address'</span>, IP);
+    ExtraData.AddPair(<span class="string">'user_agent'</span>, <span class="string">'Mozilla/5.0...'</span>);
+    ExtraData.AddPair(<span class="string">'session_id'</span>, <span class="string">'abc123xyz'</span>);
+    
+    <span class="comment">// Log com método genérico</span>
+    TLogger.Instance.Log(
+      llInformation,
+      <span class="string">'Ação do usuário registrada'</span>,
+      <span class="string">'UserActivity'</span>,
+      ExtraData
+    );
+  <span class="keyword">finally</span>
+    ExtraData.Free; <span class="comment">// Seguro: logger faz cópia interna</span>
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;</code></pre>
+                </div>
+
+                <p style="margin-top: 1rem;">Resultado no arquivo de log:</p>
+                <div class="json-preview">
+{
+  <span class="json-key">"timestamp"</span>: <span class="json-string">"2025-12-16T14:30:00.000-03:00"</span>,
+  <span class="json-key">"level"</span>: <span class="json-string">"INFO"</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Ação do usuário registrada"</span>,
+  <span class="json-key">"category"</span>: <span class="json-string">"UserActivity"</span>,
+  <span class="json-key">"extra"</span>: {
+    <span class="json-key">"user_id"</span>: <span class="json-number">42</span>,
+    <span class="json-key">"action"</span>: <span class="json-string">"login"</span>,
+    <span class="json-key">"ip_address"</span>: <span class="json-string">"192.168.1.100"</span>,
+    <span class="json-key">"user_agent"</span>: <span class="json-string">"Mozilla/5.0..."</span>,
+    <span class="json-key">"session_id"</span>: <span class="json-string">"abc123xyz"</span>
+  }
+}
+                </div>
+            </div>
+        </section>
+
+        <!-- Log Levels Section -->
+        <section id="log-levels" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📊</span>
+                Níveis de Log
+            </h2>
+            <p class="section-description">
+                O sistema suporta quatro níveis de log, cada um com propósito específico.
+            </p>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nível</th>
+                            <th>Badge</th>
+                            <th>Uso Recomendado</th>
+                            <th>Método</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Debug</strong></td>
+                            <td><span class="badge badge-debug">DEBUG</span></td>
+                            <td>Informações detalhadas para diagnóstico durante desenvolvimento</td>
+                            <td><code>Logger.Debug()</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Information</strong></td>
+                            <td><span class="badge badge-info">INFO</span></td>
+                            <td>Eventos normais da aplicação (login, transações, etc.)</td>
+                            <td><code>Logger.Info()</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Warning</strong></td>
+                            <td><span class="badge badge-warning">WARNING</span></td>
+                            <td>Situações anormais que não impedem funcionamento</td>
+                            <td><code>Logger.Warning()</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Error</strong></td>
+                            <td><span class="badge badge-error">ERROR</span></td>
+                            <td>Erros que afetam funcionalidade ou requerem atenção</td>
+                            <td><code>Logger.Error()</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Filtrando por Nível</h3>
+            <p>Configure quais níveis cada handler deve processar:</p>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="comment">// Handler que processa todos os níveis</span>
+FileHandler := TLoggerFactory.CreateFileHandler(<span class="string">'app.log'</span>, ALL_LOG_LEVELS);
+
+<span class="comment">// Handler apenas para Warning e Error</span>
+EmailHandler := TLoggerFactory.CreateEmailHandler(
+  { ... config ... },
+  [llWarning, llError]
+);
+
+<span class="comment">// Handler apenas para Error</span>
+PushHandler.EnabledLevels := [llError];
+
+<span class="comment">// Alterar níveis em runtime</span>
+FileHandler.EnabledLevels := [llInformation, llWarning, llError]; <span class="comment">// Remove Debug</span></code></pre>
+            </div>
+        </section>
+
+        <!-- Handlers Section -->
+        <section id="handlers" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🔌</span>
+                Handlers Disponíveis
+            </h2>
+            <p class="section-description">
+                Handlers são responsáveis por enviar os logs para diferentes destinos.
+                O sistema inclui três handlers prontos e permite criar handlers customizados.
+            </p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-icon file">📁</div>
+                    <h3>File Handler</h3>
+                    <p>Salva logs em arquivo local com suporte a rotação automática por tamanho.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon email">✉️</div>
+                    <h3>Email Handler</h3>
+                    <p>Envia logs por email via SMTP com suporte a SSL/TLS.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon push">📱</div>
+                    <h3>Push Notification</h3>
+                    <p>Envia logs para servidor de push notification via HTTP/REST.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon custom">⚙️</div>
+                    <h3>Custom Handler</h3>
+                    <p>Crie seus próprios handlers implementando a interface ILogHandler.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- File Handler Section -->
+        <section id="file-handler" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📁</span>
+                File Handler
+            </h2>
+            <p class="section-description">
+                O handler de arquivo é o destino padrão para logs. Suporta rotação automática
+                de arquivos quando atingem um tamanho máximo configurável.
+            </p>
+
+            <h3>Configuração</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">var</span>
+  Handler: ILogHandler;
+<span class="keyword">begin</span>
+  <span class="comment">// Configuração básica - usa caminho padrão</span>
+  Handler := TLoggerFactory.CreateFileHandler;
+  
+  <span class="comment">// Configuração completa</span>
+  Handler := TFileLogHandler.Create(
+    <span class="string">'C:\Logs\application.log'</span>,  <span class="comment">// Caminho do arquivo</span>
+    ALL_LOG_LEVELS,                 <span class="comment">// Níveis habilitados</span>
+    <span class="number">10485760</span>,                      <span class="comment">// Tamanho máximo: 10 MB</span>
+    <span class="number">5</span>                               <span class="comment">// Máximo de arquivos backup</span>
+  );
+  
+  Logger.RegisterHandler(Handler);
+<span class="keyword">end</span>;</code></pre>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parâmetro</th>
+                            <th>Tipo</th>
+                            <th>Padrão</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>AFilePath</code></td>
+                            <td>string</td>
+                            <td>Logs\application.log</td>
+                            <td>Caminho completo do arquivo de log</td>
+                        </tr>
+                        <tr>
+                            <td><code>AEnabledLevels</code></td>
+                            <td>TLogLevels</td>
+                            <td>ALL_LOG_LEVELS</td>
+                            <td>Níveis de log a processar</td>
+                        </tr>
+                        <tr>
+                            <td><code>AMaxFileSize</code></td>
+                            <td>Int64</td>
+                            <td>10485760 (10 MB)</td>
+                            <td>Tamanho máximo antes de rotacionar</td>
+                        </tr>
+                        <tr>
+                            <td><code>AMaxBackupFiles</code></td>
+                            <td>Integer</td>
+                            <td>5</td>
+                            <td>Quantidade de arquivos de backup</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Rotação de Arquivos</h3>
+            <p>Quando o arquivo atinge o tamanho máximo:</p>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Estrutura de Arquivos</span>
+                </div>
+                <pre><code>C:\Logs\
+├── application.log      <span class="comment">← Arquivo atual</span>
+├── application.1.log    <span class="comment">← Backup mais recente</span>
+├── application.2.log
+├── application.3.log
+├── application.4.log
+└── application.5.log    <span class="comment">← Backup mais antigo (será deletado)</span></code></pre>
+            </div>
+        </section>
+
+        <!-- Email Handler Section -->
+        <section id="email-handler" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">✉️</span>
+                Email Handler
+            </h2>
+            <p class="section-description">
+                Envia logs por email utilizando SMTP. Ideal para alertas de erros críticos
+                que requerem atenção imediata da equipe.
+            </p>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Atenção:</strong> Este handler utiliza os componentes <strong>Indy</strong>.
+                    Certifique-se de ter as bibliotecas instaladas no seu ambiente Delphi.
+                </div>
+            </div>
+
+            <h3>Configuração</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">var</span>
+  EmailHandler: ILogHandler;
+<span class="keyword">begin</span>
+  EmailHandler := TLoggerFactory.CreateEmailHandler(
+    <span class="string">'smtp.gmail.com'</span>,           <span class="comment">// Servidor SMTP</span>
+    <span class="number">587</span>,                           <span class="comment">// Porta (587 = TLS, 465 = SSL)</span>
+    <span class="string">'seu.email@gmail.com'</span>,       <span class="comment">// Usuário SMTP</span>
+    <span class="string">'sua-senha-de-app'</span>,          <span class="comment">// Senha ou App Password</span>
+    <span class="string">'sistema@suaempresa.com'</span>,    <span class="comment">// Email remetente</span>
+    [                               <span class="comment">// Lista de destinatários</span>
+      <span class="string">'admin@suaempresa.com'</span>,
+      <span class="string">'dev-team@suaempresa.com'</span>
+    ],
+    True,                           <span class="comment">// Usar SSL/TLS</span>
+    [llWarning, llError]            <span class="comment">// Apenas Warning e Error</span>
+  );
+  
+  Logger.RegisterHandler(EmailHandler);
+<span class="keyword">end</span>;</code></pre>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Exemplo de Email Enviado</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Email</span>
+                </div>
+                <pre><code><strong>Assunto:</strong> [LOG] ERROR - Database
+
+<strong>Corpo:</strong>
+Timestamp: 16/12/2025 14:30:00
+Level: ERROR
+Category: Database
+Message: Falha na conexão com banco de dados
+
+JSON:
+{"timestamp":"2025-12-16T14:30:00.000-03:00","level":"ERROR",
+"message":"Falha na conexão com banco de dados","category":"Database",
+"extra":{"connection_string":"Server=...","error_code":1045}}</code></pre>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Configurações Comuns de SMTP</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provedor</th>
+                            <th>Host</th>
+                            <th>Porta TLS</th>
+                            <th>Porta SSL</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Gmail</td>
+                            <td><code>smtp.gmail.com</code></td>
+                            <td>587</td>
+                            <td>465</td>
+                            <td>Requer App Password</td>
+                        </tr>
+                        <tr>
+                            <td>Outlook/Office365</td>
+                            <td><code>smtp.office365.com</code></td>
+                            <td>587</td>
+                            <td>-</td>
+                            <td>Usar TLS</td>
+                        </tr>
+                        <tr>
+                            <td>Amazon SES</td>
+                            <td><code>email-smtp.us-east-1.amazonaws.com</code></td>
+                            <td>587</td>
+                            <td>465</td>
+                            <td>Credenciais SMTP específicas</td>
+                        </tr>
+                        <tr>
+                            <td>SendGrid</td>
+                            <td><code>smtp.sendgrid.net</code></td>
+                            <td>587</td>
+                            <td>465</td>
+                            <td>Usuário: apikey</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Push Notification Handler Section -->
+        <section id="push-handler" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📱</span>
+                Push Notification Handler
+            </h2>
+            <p class="section-description">
+                Envia logs para servidores de push notification via HTTP POST.
+                Compatível com Firebase Cloud Messaging, OneSignal, e outros serviços.
+            </p>
+
+            <h3>Configuração</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">var</span>
+  PushHandler: ILogHandler;
+<span class="keyword">begin</span>
+  PushHandler := TLoggerFactory.CreatePushHandler(
+    <span class="string">'https://fcm.googleapis.com/fcm/send'</span>,  <span class="comment">// URL do servidor</span>
+    <span class="string">'YOUR_SERVER_KEY'</span>,                      <span class="comment">// API Key</span>
+    <span class="string">'MinhaAplicacao'</span>,                       <span class="comment">// Nome da app</span>
+    <span class="number">30000</span>,                                   <span class="comment">// Timeout em ms</span>
+    [llError]                                 <span class="comment">// Apenas erros críticos</span>
+  );
+  
+  Logger.RegisterHandler(PushHandler);
+<span class="keyword">end</span>;</code></pre>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Payload Enviado</h3>
+            <p>O handler envia o seguinte JSON para o servidor:</p>
+            <div class="json-preview">
+{
+  <span class="json-key">"notification"</span>: {
+    <span class="json-key">"title"</span>: <span class="json-string">"[ERROR] MinhaAplicacao"</span>,
+    <span class="json-key">"body"</span>: <span class="json-string">"Falha crítica no processamento"</span>,
+    <span class="json-key">"priority"</span>: <span class="json-string">"high"</span>
+  },
+  <span class="json-key">"data"</span>: {
+    <span class="json-key">"timestamp"</span>: <span class="json-string">"2025-12-16T14:30:00.000-03:00"</span>,
+    <span class="json-key">"level"</span>: <span class="json-string">"ERROR"</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Falha crítica no processamento"</span>,
+    <span class="json-key">"category"</span>: <span class="json-string">"System"</span>,
+    <span class="json-key">"extra"</span>: <span class="json-null">null</span>
+  }
+}
+            </div>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div>
+                    <strong>Dica:</strong> Adapte o método <code>SendPushNotification</code> na classe
+                    <code>TPushNotificationLogHandler</code> conforme a API do seu servidor de push.
+                </div>
+            </div>
+        </section>
+
+        <!-- Custom Handler Section -->
+        <section id="custom-handler" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">⚙️</span>
+                Criando Handler Customizado
+            </h2>
+            <p class="section-description">
+                Implemente a interface <code>ILogHandler</code> ou herde de <code>TBaseLogHandler</code>
+                para criar handlers personalizados.
+            </p>
+
+            <h3>Exemplo: Handler para Console</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">unit</span> Logger.Handlers.Console;
+
+<span class="keyword">interface</span>
+
+<span class="keyword">uses</span>
+  System.SysUtils,
+  Logger.Types,
+  Logger.Interfaces,
+  Logger.Handlers.Base;
+
+<span class="keyword">type</span>
+  TConsoleLogHandler = <span class="keyword">class</span>(TBaseLogHandler)
+  <span class="keyword">private</span>
+    FUseColors: Boolean;
+    
+    <span class="keyword">procedure</span> SetConsoleColor(ALevel: TLogLevel);
+    <span class="keyword">procedure</span> ResetConsoleColor;
+  <span class="keyword">protected</span>
+    <span class="keyword">procedure</span> DoHandle(<span class="keyword">const</span> AEntry: ILogEntry); <span class="keyword">override</span>;
+  <span class="keyword">public</span>
+    <span class="keyword">constructor</span> Create(
+      AUseColors: Boolean = True;
+      AEnabledLevels: TLogLevels = ALL_LOG_LEVELS
+    );
+    
+    <span class="keyword">property</span> UseColors: Boolean <span class="keyword">read</span> FUseColors <span class="keyword">write</span> FUseColors;
+  <span class="keyword">end</span>;
+
+<span class="keyword">implementation</span>
+
+<span class="keyword">uses</span>
+  Winapi.Windows;
+
+<span class="keyword">constructor</span> TConsoleLogHandler.Create(AUseColors: Boolean; AEnabledLevels: TLogLevels);
+<span class="keyword">begin</span>
+  <span class="keyword">inherited</span> Create(<span class="string">'ConsoleHandler'</span>, AEnabledLevels);
+  FUseColors := AUseColors;
+<span class="keyword">end</span>;
+
+<span class="keyword">procedure</span> TConsoleLogHandler.SetConsoleColor(ALevel: TLogLevel);
+<span class="keyword">var</span>
+  LHandle: THandle;
+  LColor: Word;
+<span class="keyword">begin</span>
+  <span class="keyword">if not</span> FUseColors <span class="keyword">then</span> Exit;
+  
+  LHandle := GetStdHandle(STD_OUTPUT_HANDLE);
+  
+  <span class="keyword">case</span> ALevel <span class="keyword">of</span>
+    llDebug:       LColor := FOREGROUND_INTENSITY;                              <span class="comment">// Cinza</span>
+    llInformation: LColor := FOREGROUND_GREEN <span class="keyword">or</span> FOREGROUND_INTENSITY;         <span class="comment">// Verde</span>
+    llWarning:     LColor := FOREGROUND_RED <span class="keyword">or</span> FOREGROUND_GREEN <span class="keyword">or</span> FOREGROUND_INTENSITY; <span class="comment">// Amarelo</span>
+    llError:       LColor := FOREGROUND_RED <span class="keyword">or</span> FOREGROUND_INTENSITY;           <span class="comment">// Vermelho</span>
+  <span class="keyword">else</span>
+    LColor := FOREGROUND_RED <span class="keyword">or</span> FOREGROUND_GREEN <span class="keyword">or</span> FOREGROUND_BLUE;
+  <span class="keyword">end</span>;
+  
+  SetConsoleTextAttribute(LHandle, LColor);
+<span class="keyword">end</span>;
+
+<span class="keyword">procedure</span> TConsoleLogHandler.ResetConsoleColor;
+<span class="keyword">var</span>
+  LHandle: THandle;
+<span class="keyword">begin</span>
+  <span class="keyword">if not</span> FUseColors <span class="keyword">then</span> Exit;
+  
+  LHandle := GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(LHandle, FOREGROUND_RED <span class="keyword">or</span> FOREGROUND_GREEN <span class="keyword">or</span> FOREGROUND_BLUE);
+<span class="keyword">end</span>;
+
+<span class="keyword">procedure</span> TConsoleLogHandler.DoHandle(<span class="keyword">const</span> AEntry: ILogEntry);
+<span class="keyword">var</span>
+  LOutput: <span class="keyword">string</span>;
+<span class="keyword">begin</span>
+  LOutput := Format(<span class="string">'[%s] [%s] %s: %s'</span>, [
+    FormatDateTime(<span class="string">'yyyy-mm-dd hh:nn:ss.zzz'</span>, AEntry.Timestamp),
+    LOG_LEVEL_NAMES[AEntry.Level],
+    AEntry.Category,
+    AEntry.Message
+  ]);
+  
+  SetConsoleColor(AEntry.Level);
+  <span class="keyword">try</span>
+    WriteLn(LOutput);
+  <span class="keyword">finally</span>
+    ResetConsoleColor;
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">end</span>.</code></pre>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Exemplo: Handler para Database</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">unit</span> Logger.Handlers.Database;
+
+<span class="keyword">interface</span>
+
+<span class="keyword">uses</span>
+  System.SysUtils,
+  Data.DB,
+  FireDAC.Comp.Client,
+  Logger.Types,
+  Logger.Interfaces,
+  Logger.Handlers.Base;
+
+<span class="keyword">type</span>
+  TDatabaseLogHandler = <span class="keyword">class</span>(TBaseLogHandler)
+  <span class="keyword">private</span>
+    FConnection: TFDConnection;
+    FTableName: <span class="keyword">string</span>;
+    FOwnsConnection: Boolean;
+  <span class="keyword">protected</span>
+    <span class="keyword">procedure</span> DoHandle(<span class="keyword">const</span> AEntry: ILogEntry); <span class="keyword">override</span>;
+  <span class="keyword">public</span>
+    <span class="keyword">constructor</span> Create(
+      AConnection: TFDConnection;
+      <span class="keyword">const</span> ATableName: <span class="keyword">string</span> = <span class="string">'LOG_ENTRIES'</span>;
+      AEnabledLevels: TLogLevels = ALL_LOG_LEVELS;
+      AOwnsConnection: Boolean = False
+    );
+    <span class="keyword">destructor</span> Destroy; <span class="keyword">override</span>;
+  <span class="keyword">end</span>;
+
+<span class="keyword">implementation</span>
+
+<span class="keyword">constructor</span> TDatabaseLogHandler.Create(
+  AConnection: TFDConnection;
+  <span class="keyword">const</span> ATableName: <span class="keyword">string</span>;
+  AEnabledLevels: TLogLevels;
+  AOwnsConnection: Boolean);
+<span class="keyword">begin</span>
+  <span class="keyword">inherited</span> Create(<span class="string">'DatabaseHandler'</span>, AEnabledLevels);
+  FConnection := AConnection;
+  FTableName := ATableName;
+  FOwnsConnection := AOwnsConnection;
+<span class="keyword">end</span>;
+
+<span class="keyword">destructor</span> TDatabaseLogHandler.Destroy;
+<span class="keyword">begin</span>
+  <span class="keyword">if</span> FOwnsConnection <span class="keyword">and</span> Assigned(FConnection) <span class="keyword">then</span>
+    FConnection.Free;
+  <span class="keyword">inherited</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">procedure</span> TDatabaseLogHandler.DoHandle(<span class="keyword">const</span> AEntry: ILogEntry);
+<span class="keyword">var</span>
+  LQuery: TFDQuery;
+<span class="keyword">begin</span>
+  LQuery := TFDQuery.Create(<span class="keyword">nil</span>);
+  <span class="keyword">try</span>
+    LQuery.Connection := FConnection;
+    LQuery.SQL.Text := Format(
+      <span class="string">'INSERT INTO %s (TIMESTAMP, LEVEL, CATEGORY, MESSAGE, JSON_DATA) '</span> +
+      <span class="string">'VALUES (:ts, :level, :cat, :msg, :json)'</span>,
+      [FTableName]
+    );
+    
+    LQuery.ParamByName(<span class="string">'ts'</span>).AsDateTime := AEntry.Timestamp;
+    LQuery.ParamByName(<span class="string">'level'</span>).AsString := LOG_LEVEL_NAMES[AEntry.Level];
+    LQuery.ParamByName(<span class="string">'cat'</span>).AsString := AEntry.Category;
+    LQuery.ParamByName(<span class="string">'msg'</span>).AsString := AEntry.Message;
+    LQuery.ParamByName(<span class="string">'json'</span>).AsString := AEntry.ToJSONString;
+    
+    LQuery.ExecSQL;
+  <span class="keyword">finally</span>
+    LQuery.Free;
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">end</span>.</code></pre>
+            </div>
+        </section>
+
+        <!-- Configuration Section -->
+        <section id="configuration" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🔧</span>
+                Configuração Avançada
+            </h2>
+            <p class="section-description">
+                Opções avançadas de configuração para cenários específicos.
+            </p>
+
+            <h3>Configuração via Arquivo INI</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">unit</span> Logger.Config;
+
+<span class="keyword">interface</span>
+
+<span class="keyword">uses</span>
+  System.SysUtils,
+  System.IniFiles,
+  Logger.Types,
+  Logger.Interfaces,
+  Logger.Facade,
+  Logger.Factory;
+
+<span class="keyword">type</span>
+  TLoggerConfigurator = <span class="keyword">class</span>
+  <span class="keyword">public</span>
+    <span class="keyword">class procedure</span> LoadFromIniFile(<span class="keyword">const</span> AFileName: <span class="keyword">string</span>);
+  <span class="keyword">end</span>;
+
+<span class="keyword">implementation</span>
+
+<span class="keyword">class procedure</span> TLoggerConfigurator.LoadFromIniFile(<span class="keyword">const</span> AFileName: <span class="keyword">string</span>);
+<span class="keyword">var</span>
+  LIni: TIniFile;
+  LLogger: ILogger;
+  LFilePath: <span class="keyword">string</span>;
+  LMaxSize: Int64;
+  LEnableEmail: Boolean;
+<span class="keyword">begin</span>
+  LIni := TIniFile.Create(AFileName);
+  <span class="keyword">try</span>
+    LLogger := TLogger.Instance;
+    
+    <span class="comment">// Configuração do File Handler</span>
+    <span class="keyword">if</span> LIni.ReadBool(<span class="string">'FileHandler'</span>, <span class="string">'Enabled'</span>, True) <span class="keyword">then</span>
+    <span class="keyword">begin</span>
+      LFilePath := LIni.ReadString(<span class="string">'FileHandler'</span>, <span class="string">'Path'</span>, <span class="string">''</span>);
+      LMaxSize := LIni.ReadInteger(<span class="string">'FileHandler'</span>, <span class="string">'MaxSizeMB'</span>, <span class="number">10</span>) * <span class="number">1024</span> * <span class="number">1024</span>;
+      
+      LLogger.RegisterHandler(
+        TFileLogHandler.Create(LFilePath, ALL_LOG_LEVELS, LMaxSize)
+      );
+    <span class="keyword">end</span>;
+    
+    <span class="comment">// Configuração do Email Handler</span>
+    <span class="keyword">if</span> LIni.ReadBool(<span class="string">'EmailHandler'</span>, <span class="string">'Enabled'</span>, False) <span class="keyword">then</span>
+    <span class="keyword">begin</span>
+      LLogger.RegisterHandler(
+        TLoggerFactory.CreateEmailHandler(
+          LIni.ReadString(<span class="string">'EmailHandler'</span>, <span class="string">'SMTPHost'</span>, <span class="string">''</span>),
+          LIni.ReadInteger(<span class="string">'EmailHandler'</span>, <span class="string">'SMTPPort'</span>, <span class="number">587</span>),
+          LIni.ReadString(<span class="string">'EmailHandler'</span>, <span class="string">'Username'</span>, <span class="string">''</span>),
+          LIni.ReadString(<span class="string">'EmailHandler'</span>, <span class="string">'Password'</span>, <span class="string">''</span>),
+          LIni.ReadString(<span class="string">'EmailHandler'</span>, <span class="string">'FromAddress'</span>, <span class="string">''</span>),
+          LIni.ReadString(<span class="string">'EmailHandler'</span>, <span class="string">'ToAddresses'</span>, <span class="string">''</span>).Split([<span class="string">';'</span>]),
+          LIni.ReadBool(<span class="string">'EmailHandler'</span>, <span class="string">'UseSSL'</span>, True),
+          [llWarning, llError]
+        )
+      );
+    <span class="keyword">end</span>;
+  <span class="keyword">finally</span>
+    LIni.Free;
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">end</span>.</code></pre>
+            </div>
+
+            <h3 style="margin-top: 1.5rem;">Arquivo de Configuração</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">INI</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>[FileHandler]
+Enabled=1
+Path=C:\Logs\application.log
+MaxSizeMB=10
+MaxBackupFiles=5
+
+[EmailHandler]
+Enabled=1
+SMTPHost=smtp.gmail.com
+SMTPPort=587
+Username=sistema@empresa.com
+Password=app-password
+FromAddress=noreply@empresa.com
+ToAddresses=admin@empresa.com;dev@empresa.com
+UseSSL=1
+
+[PushHandler]
+Enabled=0
+ServerURL=https://api.pushserver.com/send
+APIKey=your-api-key
+AppName=MinhaApp</code></pre>
+            </div>
+        </section>
+
+        <!-- Threading Section -->
+        <section id="threading" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🔄</span>
+                Threading e Performance
+            </h2>
+            <p class="section-description">
+                O sistema foi projetado para alta performance com processamento assíncrono.
+            </p>
+
+            <h3>Fluxo de Processamento</h3>
+            <div class="architecture-diagram">
+                <div style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 1rem;">
+                    <div class="diagram-component">
+                        <strong>Main Thread</strong><br>
+                        Logger.Info("msg")
+                    </div>
+                    <div style="color: #94a3b8;">→</div>
+                    <div class="diagram-component">
+                        <strong>TLogQueue</strong><br>
+                        Thread-Safe Queue
+                    </div>
+                    <div style="color: #94a3b8;">→</div>
+                    <div class="diagram-component">
+                        <strong>Worker Thread</strong><br>
+                        Background Processing
+                    </div>
+                    <div style="color: #94a3b8;">→</div>
+                    <div class="diagram-component">
+                        <strong>Handlers</strong><br>
+                        File, Email, Push
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Características de Thread-Safety</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Mecanismo</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>TLogQueue</code></td>
+                            <td>TCriticalSection</td>
+                            <td>Protege operações de enqueue/dequeue</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLogDispatcher</code></td>
+                            <td>TMultiReadExclusiveWriteSynchronizer</td>
+                            <td>Permite leitura concorrente, escrita exclusiva</td>
+                        </tr>
+                        <tr>
+                            <td><code>TFileLogHandler</code></td>
+                            <td>TCriticalSection</td>
+                            <td>Serializa escrita no arquivo</td>
+                        </tr>
+                        <tr>
+                            <td><code>TLogger</code></td>
+                            <td>TCriticalSection</td>
+                            <td>Protege estado interno do logger</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Flush e Shutdown</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="comment">// Aguarda processamento de todos os logs pendentes</span>
+Logger.Flush;
+
+<span class="comment">// Encerra o logger de forma segura</span>
+<span class="comment">// - Sinaliza thread para parar</span>
+<span class="comment">// - Processa itens restantes na fila</span>
+<span class="comment">// - Libera recursos</span>
+Logger.Shutdown;
+
+<span class="comment">// Para singleton, use:</span>
+TLogger.ReleaseInstance;</code></pre>
+            </div>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">🚨</span>
+                <div>
+                    <strong>Importante:</strong> Sempre chame <code>Flush</code> ou <code>Shutdown</code> 
+                    antes de encerrar a aplicação para garantir que todos os logs sejam processados.
+                </div>
+            </div>
+        </section>
+
+        <!-- Memory Management Section -->
+        <section id="memory" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🧠</span>
+                Gerenciamento de Memória
+            </h2>
+            <p class="section-description">
+                O sistema utiliza interfaces e contagem de referência para evitar vazamentos de memória.
+            </p>
+
+            <h3>Práticas Implementadas</h3>
+            <ul class="feature-list">
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Interfaces com ARC</strong> - Todas as classes principais implementam interfaces, garantindo liberação automática</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Cópia de JSON</strong> - TLogEntry faz cópia do ExtraData para evitar problemas de ownership</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Try-Finally</strong> - Todos os recursos temporários são protegidos com try-finally</span>
+                </li>
+                <li>
+                    <span class="feature-check">✓</span>
+                    <span><strong>Graceful Shutdown</strong> - Worker thread processa fila pendente antes de finalizar</span>
+                </li>
+            </ul>
+
+            <h3 style="margin-top: 2rem;">Exemplo de Uso Seguro</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="keyword">procedure</span> SafeLogging;
+<span class="keyword">var</span>
+  ExtraData: TJSONObject;
+<span class="keyword">begin</span>
+  <span class="comment">// JSON temporário - pode ser liberado após a chamada</span>
+  ExtraData := TJSONObject.Create;
+  <span class="keyword">try</span>
+    ExtraData.AddPair(<span class="string">'key'</span>, <span class="string">'value'</span>);
+    
+    <span class="comment">// TLogEntry faz cópia interna do JSON</span>
+    TLogger.Instance.Log(llInfo, <span class="string">'Mensagem'</span>, <span class="string">'Cat'</span>, ExtraData);
+  <span class="keyword">finally</span>
+    ExtraData.Free; <span class="comment">// Seguro: logger já copiou os dados</span>
+  <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">procedure</span> ApplicationShutdown;
+<span class="keyword">begin</span>
+  <span class="comment">// Libera singleton e aguarda processamento</span>
+  TLogger.ReleaseInstance;
+  
+  <span class="comment">// Verifica vazamentos em modo Debug</span>
+  {$IFDEF DEBUG}
+  ReportMemoryLeaksOnShutdown := True;
+  {$ENDIF}
+<span class="keyword">end</span>;</code></pre>
+            </div>
+        </section>
+
+        <!-- Design Patterns Section -->
+        <section id="patterns" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📐</span>
+                Design Patterns Utilizados
+            </h2>
+            <p class="section-description">
+                O sistema implementa diversos padrões de projeto para garantir código limpo,
+                extensível e de fácil manutenção.
+            </p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🎯 Singleton</h3>
+                    <p><code>TLogger.Instance</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Garante uma única instância global do logger, acessível de qualquer parte da aplicação.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🏭 Factory</h3>
+                    <p><code>TLoggerFactory</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Centraliza e simplifica a criação de handlers com configurações pré-definidas.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>👁️ Observer</h3>
+                    <p><code>TLogDispatcher</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Handlers se registram e são notificados automaticamente para cada log entry.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🎭 Strategy</h3>
+                    <p><code>ILogHandler</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Diferentes handlers implementam a mesma interface, permitindo intercâmbio.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>🎪 Facade</h3>
+                    <p><code>TLogger</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Interface simplificada que esconde a complexidade do sistema interno.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3>📦 Producer-Consumer</h3>
+                    <p><code>TLogQueue + TLogWorkerThread</code></p>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">
+                        Desacopla produção de logs do processamento assíncrono.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Reference Section -->
+        <section id="api-reference" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📚</span>
+                API Reference
+            </h2>
+            <p class="section-description">
+                Referência completa das interfaces e métodos disponíveis.
+            </p>
+
+            <h3>ILogger</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th>Parâmetros</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Log</code></td>
+                            <td>ALevel, AMessage, ACategory, AExtraData</td>
+                            <td>Registra log com nível específico</td>
+                        </tr>
+                        <tr>
+                            <td><code>Debug</code></td>
+                            <td>AMessage, ACategory</td>
+                            <td>Atalho para log nível Debug</td>
+                        </tr>
+                        <tr>
+                            <td><code>Info</code></td>
+                            <td>AMessage, ACategory</td>
+                            <td>Atalho para log nível Information</td>
+                        </tr>
+                        <tr>
+                            <td><code>Warning</code></td>
+                            <td>AMessage, ACategory</td>
+                            <td>Atalho para log nível Warning</td>
+                        </tr>
+                        <tr>
+                            <td><code>Error</code></td>
+                            <td>AMessage, ACategory</td>
+                            <td>Atalho para log nível Error</td>
+                        </tr>
+                        <tr>
+                            <td><code>Flush</code></td>
+                            <td>-</td>
+                            <td>Aguarda processamento da fila</td>
+                        </tr>
+                        <tr>
+                            <td><code>Shutdown</code></td>
+                            <td>-</td>
+                            <td>Encerra o logger</td>
+                        </tr>
+                        <tr>
+                            <td><code>RegisterHandler</code></td>
+                            <td>AHandler: ILogHandler</td>
+                            <td>Adiciona handler</td>
+                        </tr>
+                        <tr>
+                            <td><code>UnregisterHandler</code></td>
+                            <td>AHandler: ILogHandler</td>
+                            <td>Remove handler</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">ILogHandler</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Membro</th>
+                            <th>Tipo</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Name</code></td>
+                            <td>property string</td>
+                            <td>Nome identificador do handler</td>
+                        </tr>
+                        <tr>
+                            <td><code>EnabledLevels</code></td>
+                            <td>property TLogLevels</td>
+                            <td>Níveis de log habilitados</td>
+                        </tr>
+                        <tr>
+                            <td><code>Handle</code></td>
+                            <td>procedure</td>
+                            <td>Processa um log entry</td>
+                        </tr>
+                        <tr>
+                            <td><code>IsEnabled</code></td>
+                            <td>function</td>
+                            <td>Verifica se nível está habilitado</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">ILogEntry</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Propriedade</th>
+                            <th>Tipo</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Timestamp</code></td>
+                            <td>TDateTime</td>
+                            <td>Data/hora do log</td>
+                        </tr>
+                        <tr>
+                            <td><code>Level</code></td>
+                            <td>TLogLevel</td>
+                            <td>Nível do log</td>
+                        </tr>
+                        <tr>
+                            <td><code>Message</code></td>
+                            <td>string</td>
+                            <td>Mensagem principal</td>
+                        </tr>
+                        <tr>
+                            <td><code>Category</code></td>
+                            <td>string</td>
+                            <td>Categoria/módulo</td>
+                        </tr>
+                        <tr>
+                            <td><code>ExtraData</code></td>
+                            <td>TJSONObject</td>
+                            <td>Dados adicionais</td>
+                        </tr>
+                        <tr>
+                            <td><code>ToJSON</code></td>
+                            <td>function</td>
+                            <td>Retorna TJSONObject</td>
+                        </tr>
+                        <tr>
+                            <td><code>ToJSONString</code></td>
+                            <td>function</td>
+                            <td>Retorna string JSON</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- JSON Format Section -->
+        <section id="json-format" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">📄</span>
+                Formato JSON
+            </h2>
+            <p class="section-description">
+                Todos os logs são armazenados em formato JSON Lines (uma entrada JSON por linha).
+            </p>
+
+            <h3>Estrutura do Log Entry</h3>
+            <div class="json-preview">
+{
+  <span class="json-key">"timestamp"</span>: <span class="json-string">"2025-12-16T14:30:00.123-03:00"</span>,
+  <span class="json-key">"level"</span>: <span class="json-string">"INFO"</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Usuário autenticado com sucesso"</span>,
+  <span class="json-key">"category"</span>: <span class="json-string">"Authentication"</span>,
+  <span class="json-key">"extra"</span>: {
+    <span class="json-key">"user_id"</span>: <span class="json-number">12345</span>,
+    <span class="json-key">"username"</span>: <span class="json-string">"joao.silva"</span>,
+    <span class="json-key">"ip_address"</span>: <span class="json-string">"192.168.1.100"</span>,
+    <span class="json-key">"method"</span>: <span class="json-string">"OAuth2"</span>
+  }
+}
+            </div>
+
+            <h3 style="margin-top: 2rem;">Campos</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Campo</th>
+                            <th>Tipo</th>
+                            <th>Formato</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>timestamp</code></td>
+                            <td>string</td>
+                            <td>ISO 8601</td>
+                            <td>Data/hora com timezone</td>
+                        </tr>
+                        <tr>
+                            <td><code>level</code></td>
+                            <td>string</td>
+                            <td>DEBUG|INFO|WARNING|ERROR</td>
+                            <td>Nível do log</td>
+                        </tr>
+                        <tr>
+                            <td><code>message</code></td>
+                            <td>string</td>
+                            <td>Texto livre</td>
+                            <td>Mensagem principal</td>
+                        </tr>
+                        <tr>
+                            <td><code>category</code></td>
+                            <td>string</td>
+                            <td>Texto livre</td>
+                            <td>Categoria/módulo</td>
+                        </tr>
+                        <tr>
+                            <td><code>extra</code></td>
+                            <td>object|null</td>
+                            <td>JSON Object</td>
+                            <td>Dados adicionais</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Exemplo de Arquivo de Log</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">application.log</span>
+                </div>
+                <pre><code>{"timestamp":"2025-12-16T08:00:00.000-03:00","level":"INFO","message":"Aplicação iniciada","category":"Startup","extra":null}
+{"timestamp":"2025-12-16T08:00:01.234-03:00","level":"DEBUG","message":"Carregando configurações","category":"Config","extra":{"file":"app.ini"}}
+{"timestamp":"2025-12-16T08:00:02.567-03:00","level":"INFO","message":"Conexão com banco estabelecida","category":"Database","extra":{"server":"localhost","database":"mydb"}}
+{"timestamp":"2025-12-16T08:15:30.890-03:00","level":"WARNING","message":"Cache próximo do limite","category":"Cache","extra":{"usage":85,"max":100}}
+{"timestamp":"2025-12-16T08:30:45.123-03:00","level":"ERROR","message":"Falha ao processar pedido","category":"Orders","extra":{"order_id":12345,"error":"Timeout"}}</code></pre>
+            </div>
+        </section>
+
+        <!-- Troubleshooting Section -->
+        <section id="troubleshooting" class="section">
+            <h2 class="section-title">
+                <span class="section-title-icon">🔍</span>
+                Troubleshooting
+            </h2>
+            <p class="section-description">
+                Soluções para problemas comuns encontrados ao usar o sistema de logger.
+            </p>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Logs não aparecem no arquivo</strong><br>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Verifique se chamou <code>Logger.Flush</code> antes de verificar o arquivo</li>
+                        <li>Confirme que o diretório existe e a aplicação tem permissão de escrita</li>
+                        <li>Verifique se o handler está registrado e o nível está habilitado</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Emails não estão sendo enviados</strong><br>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Verifique credenciais SMTP e configurações de porta/SSL</li>
+                        <li>Para Gmail, use App Password em vez da senha normal</li>
+                        <li>Confirme que o nível do log está habilitado no handler</li>
+                        <li>Verifique se há firewall bloqueando a porta SMTP</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Memory leaks ao encerrar</strong><br>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>Sempre chame <code>TLogger.ReleaseInstance</code> antes de encerrar</li>
+                        <li>Se usar instância própria, chame <code>Logger.Shutdown</code></li>
+                        <li>Evite manter referências a handlers após shutdown</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Aplicação trava ao encerrar</strong><br>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>O <code>Flush</code> tem timeout de 5 segundos por padrão</li>
+                        <li>Handlers lentos (email, push) podem atrasar o shutdown</li>
+                        <li>Considere usar níveis mais restritivos para handlers de rede</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Habilitando Debug Output</h3>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-lang">Delphi</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code><span class="comment">// Em modo DEBUG, erros de handlers são enviados para OutputDebugString</span>
+<span class="comment">// Use o DebugView ou o Debug Output do Delphi IDE para visualizar</span>
+
+<span class="comment">// No Project Options, defina:</span>
+{$DEFINE DEBUG}
+
+<span class="comment">// Ou compile em modo Debug para habilitar automaticamente</span></code></pre>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 2rem; color: var(--text-muted); border-top: 1px solid var(--border-color); margin-top: 2rem;">
+            <p><strong>Logger System for Delphi</strong> - Versão 1.0.0</p>
+            <p style="margin-top: 0.5rem;">Documentação gerada em Dezembro de 2025</p>
+        </footer>
+    </main>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(event, tabId) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-container').querySelector('code');
+            const text = codeBlock.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copiado!';
+                button.style.background = '#22c55e';
+                button.style.borderColor = '#22c55e';
+                button.style.color = 'white';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                    button.style.borderColor = '';
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
+
+        // Smooth scrolling for sidebar links
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    // Update active state
+                    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Scroll to element
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Update active sidebar link on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (window.pageYOffset >= sectionTop) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + currentSection) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

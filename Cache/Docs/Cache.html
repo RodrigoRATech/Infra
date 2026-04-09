@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação — Módulo de Cache Redis para Delphi 12</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            font-size: 1.15em;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin: 4px;
+        }
+
+        .badge-blue { background: rgba(255,255,255,0.2); color: white; }
+
+        nav.toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 48px;
+        }
+
+        nav.toc h2 {
+            font-size: 1.4em;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        nav.toc ol {
+            padding-left: 24px;
+        }
+
+        nav.toc li {
+            margin: 8px 0;
+        }
+
+        nav.toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        nav.toc a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 1.6em;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.25em;
+            margin-top: 28px;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        h4 {
+            font-size: 1.05em;
+            margin-top: 20px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            margin-bottom: 14px;
+        }
+
+        ul, ol {
+            margin-bottom: 14px;
+            padding-left: 28px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Consolas', 'Fira Code', monospace;
+        }
+
+        :not(pre) > code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--primary-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+        }
+
+        .callout {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            border-left: 4px solid;
+        }
+
+        .callout-info {
+            background: #eff6ff;
+            border-color: var(--primary);
+        }
+
+        .callout-warning {
+            background: #fffbeb;
+            border-color: var(--warning);
+        }
+
+        .callout-success {
+            background: #f0fdf4;
+            border-color: var(--success);
+        }
+
+        .callout-danger {
+            background: #fef2f2;
+            border-color: var(--danger);
+        }
+
+        .diagram {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+
+        @media print {
+            header { padding: 30px 0; }
+            section { break-inside: avoid; }
+            .container { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <h1>Módulo de Cache Redis para Delphi 12</h1>
+        <p>Gerenciamento de cache distribuído com fallback, monitoramento e integração Horse</p>
+        <div style="margin-top: 16px;">
+            <span class="badge badge-blue">Delphi 12</span>
+            <span class="badge badge-blue">Redis</span>
+            <span class="badge badge-blue">Horse</span>
+            <span class="badge badge-blue">DUnitX</span>
+            <span class="badge badge-blue">SOLID</span>
+            <span class="badge badge-blue">GoF</span>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <nav class="toc">
+        <h2>Sumário</h2>
+        <ol>
+            <li><a href="#visao-geral">Visão Geral e Arquitetura</a></li>
+            <li><a href="#padroes">Padrões de Projeto Aplicados</a></li>
+            <li><a href="#modulos">Estrutura de Módulos</a></li>
+            <li><a href="#mod-cache">Módulo 1 — Cache Redis</a></li>
+            <li><a href="#mod-monitor">Módulo 2 — Monitor de Cache</a></li>
+            <li><a href="#mod-middleware">Módulo 3 — Middleware Horse</a></li>
+            <li><a href="#mod-testes">Módulo 4 — Testes Unitários e de Estresse</a></li>
+            <li><a href="#factory">Factory e Configuração</a></li>
+            <li><a href="#uso">Guia de Uso</a></li>
+            <li><a href="#prereq">Pré-requisitos</a></li>
+            <li><a href="#estrutura-pastas">Estrutura de Pastas</a></li>
+        </ol>
+    </nav>
+
+    <!-- 1. VISÃO GERAL -->
+    <section id="visao-geral">
+        <h2>1. Visão Geral e Arquitetura</h2>
+        <p>
+            Este módulo fornece uma solução completa de cache distribuído para aplicações Delphi 12,
+            utilizando Redis como backend principal. A arquitetura foi projetada com foco em
+            <strong>desacoplamento</strong>, <strong>resiliência</strong> e <strong>escalabilidade</strong>.
+        </p>
+
+        <h3>Diagrama de Arquitetura</h3>
+        <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    CONSUMIDORES                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  Horse API   │  │  Serviço X   │  │  Worker Y    │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
+└─────────┼─────────────────┼─────────────────┼───────────┘
+          │                 │                 │
+          ▼                 ▼                 ▼
+┌─────────────────────────────────────────────────────────┐
+│               CAMADA DE ABSTRAÇÃO                       │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │           ICacheManager (Alto Nível)               │ │
+│  │  GetString / PutString / GetObject&lt;T&gt; / GetOrAdd  │ │
+│  └───────────────────────┬────────────────────────────┘ │
+│                          │                              │
+│  ┌───────────────────────▼────────────────────────────┐ │
+│  │          ICacheStrategy (Strategy Pattern)         │ │
+│  │    Get / Put / Remove / Exists / Clear / Stats     │ │
+│  └───────────────────────┬────────────────────────────┘ │
+│                          │                              │
+│  ┌───────────────┐  ┌────▼──────────┐  ┌────────────┐  │
+│  │ICacheSerializer│  │TRedisCache   │  │ICacheMonitor│  │
+│  │  (Genérico)   │  │  Strategy    │  │ (Métricas) │  │
+│  └───────────────┘  └──┬────┬──────┘  └────────────┘  │
+└─────────────────────────┼────┼──────────────────────────┘
+                          │    │
+              ┌───────────┘    └──────────┐
+              ▼                           ▼
+    ┌──────────────────┐      ┌────────────────────┐
+    │   Redis Server   │      │  Memory Fallback   │
+    │  (delphiredis)   │      │  (TDictionary)     │
+    └──────────────────┘      └────────────────────┘
+
+    Threads auxiliares:
+    ┌──────────────────┐      ┌────────────────────┐
+    │  Watchdog Thread │      │  Monitor Collector  │
+    │  (reconexão)     │      │  (histórico)        │
+    └──────────────────┘      └────────────────────┘
+        </div>
+
+        <h3>Princípios Fundamentais</h3>
+        <ul>
+            <li><strong>Zero acoplamento</strong> com o componente Redis — consumidores dependem apenas de interfaces</li>
+            <li><strong>Fallback automático</strong> — cache em memória assume quando Redis está indisponível</li>
+            <li><strong>Thread-safe</strong> — todas as operações protegidas por <code>TCriticalSection</code></li>
+            <li><strong>Reconexão automática</strong> — Watchdog monitora e reconecta sem intervenção</li>
+            <li><strong>Métricas em tempo real</strong> — hits, misses, erros, hit ratio, uptime</li>
+        </ul>
+    </section>
+
+    <!-- 2. PADRÕES -->
+    <section id="padroes">
+        <h2>2. Padrões de Projeto Aplicados</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Padrão</th>
+                    <th>Tipo</th>
+                    <th>Onde é aplicado</th>
+                    <th>Benefício</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Strategy</strong></td>
+                    <td>GoF — Comportamental</td>
+                    <td><code>ICacheStrategy</code> / <code>TRedisCacheStrategy</code></td>
+                    <td>Desacopla o backend de cache dos consumidores. Permite trocar Redis por Memcached, arquivos etc.</td>
+                </tr>
+                <tr>
+                    <td><strong>Factory Method</strong></td>
+                    <td>GoF — Criacional</td>
+                    <td><code>TCacheFactory</code></td>
+                    <td>Centraliza criação de instâncias; facilita injeção de dependência e testes</td>
+                </tr>
+                <tr>
+                    <td><strong>Singleton</strong></td>
+                    <td>GoF — Criacional</td>
+                    <td><code>TCacheFactory</code> (instâncias default)</td>
+                    <td>Garante instância única global com acesso controlado</td>
+                </tr>
+                <tr>
+                    <td><strong>Observer</strong></td>
+                    <td>GoF — Comportamental</td>
+                    <td><code>TCacheEventProc</code> / <code>SetOnEvent</code></td>
+                    <td>Notifica interessados sobre conexão, desconexão, erros e fallback</td>
+                </tr>
+                <tr>
+                    <td><strong>Middleware / Chain of Responsibility</strong></td>
+                    <td>GoF — Comportamental</td>
+                    <td><code>TCacheMiddleware</code> no Horse</td>
+                    <td>Intercepta requisições de forma transparente sem alterar handlers existentes</td>
+                </tr>
+                <tr>
+                    <td><strong>Composition over Inheritance</strong></td>
+                    <td>SOLID (DIP/ISP)</td>
+                    <td><code>TCacheManager</code> compõe Strategy + Serializer</td>
+                    <td>Flexibilidade máxima na combinação de comportamentos</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Princípios SOLID</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Princípio</th>
+                    <th>Aplicação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>S</strong> — Single Responsibility</td>
+                    <td>Cada classe tem uma única responsabilidade: <code>TCacheConfig</code> (configuração), <code>TCacheSerializer</code> (serialização), <code>TMemoryFallbackCache</code> (fallback), <code>TRedisCacheStrategy</code> (comunicação Redis)</td>
+                </tr>
+                <tr>
+                    <td><strong>O</strong> — Open/Closed</td>
+                    <td>Nova strategy (ex.: Memcached) pode ser adicionada implementando <code>ICacheStrategy</code> sem modificar código existente</td>
+                </tr>
+                <tr>
+                    <td><strong>L</strong> — Liskov Substitution</td>
+                    <td>Qualquer implementação de <code>ICacheStrategy</code> é intercambiável onde a interface é esperada</td>
+                </tr>
+                <tr>
+                    <td><strong>I</strong> — Interface Segregation</td>
+                    <td>Interfaces separadas: <code>ICacheStrategy</code> (operações), <code>ICacheSerializer</code> (serialização), <code>ICacheMonitor</code> (métricas)</td>
+                </tr>
+                <tr>
+                    <td><strong>D</strong> — Dependency Inversion</td>
+                    <td>Todas as dependências são injetadas via interface. O <code>TCacheManager</code> não conhece <code>TRedisCacheStrategy</code> diretamente</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 3. ESTRUTURA DE MÓDULOS -->
+    <section id="modulos">
+        <h2>3. Estrutura de Módulos</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Unit</th>
+                    <th>Responsabilidade</th>
+                    <th>Depende de</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Cache.Config</code></td>
+                    <td>Configuração centralizada (host, porta, TTL, prefixo)</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Interfaces</code></td>
+                    <td>Contratos (interfaces e tipos)</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Serializer</code></td>
+                    <td>Serialização genérica via RTTI/JSON</td>
+                    <td><code>Cache.Interfaces</code></td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Fallback</code></td>
+                    <td>Cache local em memória (thread-safe)</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Strategy.Redis</code></td>
+                    <td>Implementação Redis com watchdog e fallback</td>
+                    <td><code>Cache.Interfaces</code>, <code>Cache.Config</code>, <code>Cache.Fallback</code>, <code>delphiredisclient</code></td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Manager</code></td>
+                    <td>Fachada de alto nível com generics</td>
+                    <td><code>Cache.Interfaces</code></td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Monitor</code></td>
+                    <td>Monitoramento, histórico e diagnóstico</td>
+                    <td><code>Cache.Interfaces</code></td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Factory</code></td>
+                    <td>Factory centralizada (Singleton + criação)</td>
+                    <td>Todos acima</td>
+                </tr>
+                <tr>
+                    <td><code>Cache.Middleware.Horse</code></td>
+                    <td>Middleware HTTP para Horse</td>
+                    <td><code>Cache.Interfaces</code>, <code>Horse</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 4. MÓDULO CACHE -->
+    <section id="mod-cache">
+        <h2>4. Módulo 1 — Cache Redis</h2>
+
+        <h3>4.1 Configuração (<code>TCacheConfig</code>)</h3>
+        <p>Classe que centraliza todos os parâmetros do cache, eliminando valores hardcoded:</p>
+        <table>
+            <thead><tr><th>Propriedade</th><th>Tipo</th><th>Default</th><th>Descrição</th></tr></thead>
+            <tbody>
+                <tr><td><code>Host</code></td><td>string</td><td>127.0.0.1</td><td>Endereço do servidor Redis</td></tr>
+                <tr><td><code>Port</code></td><td>Integer</td><td>6379</td><td>Porta do Redis</td></tr>
+                <tr><td><code>ConnectionTimeout</code></td><td>Integer</td><td>3000</td><td>Timeout de conexão (ms)</td></tr>
+                <tr><td><code>ReadTimeout</code></td><td>Integer</td><td>3000</td><td>Timeout de leitura (ms)</td></tr>
+                <tr><td><code>DefaultTTLSeconds</code></td><td>Integer</td><td>300</td><td>TTL padrão em segundos</td></tr>
+                <tr><td><code>MaxRetries</code></td><td>Integer</td><td>3</td><td>Tentativas de conexão</td></tr>
+                <tr><td><code>RetryIntervalMs</code></td><td>Integer</td><td>1000</td><td>Intervalo entre tentativas</td></tr>
+                <tr><td><code>WatchdogIntervalMs</code></td><td>Integer</td><td>10000</td><td>Intervalo do watchdog</td></tr>
+                <tr><td><code>PurgeIntervalMs</code></td><td>Integer</td><td>60000</td><td>Intervalo de self-purge</td></tr>
+                <tr><td><code>KeyPrefix</code></td><td>string</td><td>app:cache:</td><td>Prefixo das chaves Redis</td></tr>
+                <tr><td><code>FallbackEnabled</code></td><td>Boolean</td><td>True</td><td>Ativa/desativa fallback local</td></tr>
+            </tbody>
+        </table>
+
+        <h3>4.2 Strategy de Cache (<code>ICacheStrategy</code>)</h3>
+        <p>A interface <code>ICacheStrategy</code> define o contrato de comunicação com qualquer backend de cache.
+        Nenhum consumidor conhece a implementação concreta.</p>
+
+        <div class="callout callout-info">
+            <strong>Padrão Strategy:</strong> Permite trocar o backend (Redis → Memcached → Arquivo) 
+            sem alterar nenhuma linha de código nos consumidores. Basta criar uma nova classe que 
+            implemente <code>ICacheStrategy</code>.
+        </div>
+
+        <h4>Operações disponíveis:</h4>
+        <table>
+            <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
+            <tbody>
+                <tr><td><code>Get(Key, out Value): Boolean</code></td><td>Busca valor. Retorna True se encontrado</td></tr>
+                <tr><td><code>Put(Key, Value, TTL)</code></td><td>Armazena com TTL opcional</td></tr>
+                <tr><td><code>Remove(Key): Boolean</code></td><td>Remove chave específica</td></tr>
+                <tr><td><code>Exists(Key): Boolean</code></td><td>Verifica existência</td></tr>
+                <tr><td><code>Clear</code></td><td>Limpa todo o cache</td></tr>
+                <tr><td><code>GetStats: TCacheStats</code></td><td>Retorna estatísticas atuais</td></tr>
+            </tbody>
+        </table>
+
+        <h3>4.3 Fallback Automático</h3>
+        <p>Quando o Redis está indisponível, o <code>TRedisCacheStrategy</code> ativa automaticamente
+        o <code>TMemoryFallbackCache</code>: um cache local thread-safe baseado em <code>TDictionary</code>
+        protegido por <code>TCriticalSection</code>.</p>
+
+        <h4>Fluxo de leitura com fallback:</h4>
+        <div class="diagram">
+GET("minha_chave")
+       │
+       ▼
+┌──────────────┐    SIM     ┌─────────────────┐
+│Redis online? ├───────────►│ Redis.GET(key)   │
+└──────┬───────┘            └────────┬────────┘
+       │ NÃO                        │
+       ▼                    ┌───────▼────────┐
+┌──────────────────┐        │ Encontrou?      │
+│Fallback.GET(key) │        └───┬────────┬───┘
+└──────┬───────────┘         SIM│        │NÃO
+       │                       ▼        ▼
+       ▼                 Retorna    Cache Miss
+  Resultado              Valor    (incrementa miss)
+  (incrementa                     
+   fallback count)
+        </div>
+
+        <h3>4.4 Watchdog de Conexão</h3>
+        <p>Uma thread dedicada executa periodicamente:</p>
+        <ol>
+            <li>Envia <code>PING</code> ao Redis para verificar saúde da conexão</li>
+            <li>Se falhar, marca como desconectado e dispara evento <code>ceDisconnected</code></li>
+            <li>Em cada ciclo, tenta reconectar se estiver desconectado</li>
+            <li>Ao reconectar, dispara evento <code>ceReconnected</code></li>
+            <li>Executa ciclo de self-purge conforme <code>PurgeIntervalMs</code></li>
+        </ol>
+
+        <h3>4.5 Serialização Genérica (<code>ICacheSerializer</code>)</h3>
+        <p>Utiliza <code>REST.Json</code> (nativo do Delphi) para converter objetos Delphi ↔ JSON string
+        de forma transparente via RTTI.</p>
+<pre><code>// Armazenar objeto
+var LPessoa := TPessoa.Create;
+LPessoa.Nome := 'Rodrigo';
+LPessoa.Idade := 30;
+CacheManager.PutObject&lt;TPessoa&gt;('pessoa:1', LPessoa, 600);
+LPessoa.Free;
+
+// Recuperar objeto
+var LRecuperada: TPessoa;
+if CacheManager.GetObject&lt;TPessoa&gt;('pessoa:1', LRecuperada) then
+begin
+  ShowMessage(LRecuperada.Nome); // 'Rodrigo'
+  LRecuperada.Free;
+end;</code></pre>
+
+        <h3>4.6 GetOrAdd (Cache-Aside Pattern)</h3>
+        <p>O método <code>GetOrAdd&lt;T&gt;</code> implementa o padrão Cache-Aside: tenta buscar do cache;
+        se não encontrar, executa a factory fornecida, salva o resultado e retorna.</p>
+<pre><code>var LProduto := CacheManager.GetOrAdd&lt;TProduto&gt;('produto:42',
+  function: TProduto
+  begin
+    Result := ProdutoRepository.FindById(42); // query ao banco
+  end,
+  300 // TTL 5 minutos
+);</code></pre>
+
+        <div class="callout callout-warning">
+            <strong>Atenção:</strong> O objeto retornado por <code>GetOrAdd</code> é de propriedade do chamador.
+            Você é responsável por chamar <code>Free</code> quando não precisar mais dele.
+        </div>
+    </section>
+
+    <!-- 5. MÓDULO MONITOR -->
+    <section id="mod-monitor">
+        <h2>5. Módulo 2 — Monitor de Cache</h2>
+
+        <p>O <code>TCacheMonitor</code> implementa <code>ICacheMonitor</code> e oferece:</p>
+
+        <h3>5.1 Métricas em Tempo Real</h3>
+        <table>
+            <thead><tr><th>Métrica</th><th>Descrição</th></tr></thead>
+            <tbody>
+                <tr><td><code>TotalHits</code></td><td>Total de acertos no cache</td></tr>
+                <tr><td><code>TotalMisses</code></td><td>Total de cache miss</td></tr>
+                <tr><td><code>TotalErrors</code></td><td>Total de erros de comunicação</td></tr>
+                <tr><td><code>TotalFallbacks</code></td><td>Vezes que o fallback foi ativado</td></tr>
+                <tr><td><code>TotalEvictions</code></td><td>Total de remoções explícitas</td></tr>
+                <tr><td><code>CurrentKeys</code></td><td>Chaves atuais (aproximado)</td></tr>
+                <tr><td><code>IsConnected</code></td><td>Status da conexão Redis</td></tr>
+                <tr><td><code>HitRatio</code></td><td>Percentual de acerto (hits / total)</td></tr>
+                <tr><td><code>UptimeSeconds</code></td><td>Tempo desde a inicialização</td></tr>
+            </tbody>
+        </table>
+
+        <h3>5.2 Histórico</h3>
+        <p>O monitor coleta snapshots periódicos (configurável via <code>StartCollecting</code>),
+        armazenando até <code>AMaxHistory</code> registros (padrão: 720, equivale a 1h com coleta a cada 5s).</p>
+
+<pre><code>// Inicia coleta a cada 5 segundos
+TCacheFactory.Monitor.StartCollecting(5000);
+
+// Recupera últimos 10 minutos de dados
+var LHistory := TCacheFactory.Monitor.GetHistoricalStats(10);
+try
+  // LHistory é um TJSONArray com snapshots timestamped
+  Writeln(LHistory.ToJSON);
+finally
+  LHistory.Free;
+end;</code></pre>
+
+        <h3>5.3 Health Check</h3>
+<pre><code>if TCacheFactory.Monitor.IsHealthy then
+  // Redis está conectado e com menos de 100 erros
+else
+  // Atenção: possível problema de infraestrutura</code></pre>
+    </section>
+
+    <!-- 6. MIDDLEWARE HORSE -->
+    <section id="mod-middleware">
+        <h2>6. Módulo 3 — Middleware Horse</h2>
+
+        <h3>6.1 Funcionamento</h3>
+        <p>O <code>TCacheMiddleware</code> intercepta requisições <strong>GET</strong> no Horse:</p>
+
+        <div class="diagram">
+Requisição GET /produtos?page=1
+              │
+              ▼
+    ┌─────────────────┐
+    │ Cache.Get(key)  │
+    └────┬────────┬───┘
+      HIT│        │MISS
+         ▼        ▼
+  ┌───────────┐  ┌──────────────┐
+  │ Retorna   │  │ ANext()      │
+  │ 200 + body│  │ (handler)    │
+  │ PARA aqui │  └──────┬───────┘
+  └───────────┘         │
+                        ▼
+                ┌───────────────┐
+                │ Captura body  │
+                │ Cache.Put()   │
+                │ Status 2xx?   │
+                └───────────────┘
+        </div>
+
+        <h3>6.2 Geração de Chave</h3>
+        <p>A chave do cache é gerada automaticamente usando MD5 do caminho + query string:</p>
+        <ul>
+            <li><code>GET /produtos</code> → <code>horse:&lt;md5 de "/produtos"&gt;</code></li>
+            <li><code>GET /produtos?page=1</code> → <code>horse:&lt;md5 de "/produtos?page=1"&gt;</code></li>
+        </ul>
+
+        <h3>6.3 Registro</h3>
+<pre><code>// Forma 1: Usando New (recomendado)
+THorse.Use(TCacheMiddleware.New(TCacheFactory.Manager, 120));
+
+// Forma 2: Inicialização manual
+TCacheMiddleware.Initialize(TCacheFactory.Manager, 120);
+THorse.Use(TCacheMiddleware.Middleware);</code></pre>
+
+        <div class="callout callout-success">
+            <strong>Dica:</strong> Apenas respostas com status 2xx são armazenadas no cache.
+            Erros (4xx, 5xx) nunca são cacheados.
+        </div>
+
+        <div class="callout callout-info">
+            <strong>Métodos não-GET</strong> (POST, PUT, DELETE) passam direto pelo middleware sem nenhuma interferência.
+        </div>
+    </section>
+
+    <!-- 7. TESTES -->
+    <section id="mod-testes">
+        <h2>7. Módulo 4 — Testes Unitários e de Estresse</h2>
+
+        <h3>7.1 Testes Unitários (DUnitX)</h3>
+        <p>Cobertura dos testes:</p>
+
+        <h4>TCacheConfigTest</h4>
+        <ul>
+            <li>Valores padrão corretos</li>
+            <li>Validação de configuração válida e inválida</li>
+            <li>Clone independente (deep copy)</li>
+            <li>Montagem de chave com prefixo</li>
+        </ul>
+
+        <h4>TSerializerTest</h4>
+        <ul>
+            <li>Serialização de objeto para JSON string</li>
+            <li>Deserialização de JSON string para objeto</li>
+            <li>Roundtrip completo (serializa → deserializa → compara)</li>
+            <li>Exceção ao serializar <code>nil</code></li>
+            <li>Exceção ao deserializar string vazia</li>
+            <li>Serialização/deserialização de <code>TJSONValue</code></li>
+            <li>Exceção com JSON inválido</li>
+        </ul>
+
+        <h4>TFallbackCacheTest</h4>
+        <ul>
+            <li>Put e Get básicos</li>
+            <li>Get de chave inexistente</li>
+            <li>Remove e Exists</li>
+            <li>Clear completo</li>
+            <li>Expiração por TTL (com <code>Sleep</code>)</li>
+            <li>Evição quando <code>MaxEntries</code> é excedido</li>
+        </ul>
+
+        <h3>7.2 Testes de Estresse</h3>
+        <p>Validam a robustez do <code>TCriticalSection</code> sob alta concorrência:</p>
+
+        <table>
+            <thead><tr><th>Teste</th><th>Threads</th><th>Operações/Thread</th><th>Objetivo</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>Test_Concurrent_ReadWrite (10, 1000)</code></td>
+                    <td>10</td>
+                    <td>1.000</td>
+                    <td>Carga leve — baseline</td>
+                </tr>
+                <tr>
+                    <td><code>Test_Concurrent_ReadWrite (50, 5000)</code></td>
+                    <td>50</td>
+                    <td>5.000</td>
+                    <td>Carga média — contenção moderada</td>
+                </tr>
+                <tr>
+                    <td><code>Test_Concurrent_ReadWrite (100, 10000)</code></td>
+                    <td>100</td>
+                    <td>10.000</td>
+                    <td>Carga alta — 1M de operações</td>
+                </tr>
+                <tr>
+                    <td><code>Test_Concurrent_ReadWrite_NoDeadlock</code></td>
+                    <td>20</td>
+                    <td>2.000 (misto)</td>
+                    <td>Detecção de deadlock com timeout de 30s</td>
+                </tr>
+                <tr>
+                    <td><code>Test_Concurrent_Mixed_Operations</code></td>
+                    <td>30</td>
+                    <td>500 (5 operações)</td>
+                    <td>Put/Get/Exists/Remove/Count simultâneos</td>
+                </tr>
+                <tr>
+                    <td><code>Test_High_Volume_Sequential</code></td>
+                    <td>1</td>
+                    <td>200.000</td>
+                    <td>Throughput sequencial (100k writes + 100k reads)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>7.3 Executando os Testes</h3>
+<pre><code>1. Abra o projeto Tests.Runner.dpr no Delphi 12
+2. Compile (Ctrl+F9)
+3. Execute (F9)
+4. Os resultados aparecem no console
+5. Relatório NUnit XML é gerado automaticamente</code></pre>
+
+        <div class="callout callout-warning">
+            <strong>Nota:</strong> Os testes do Serializer e Fallback <strong>não dependem</strong> de Redis rodando.
+            Apenas os testes de integração (se criados) precisariam de um Redis ativo.
+        </div>
+    </section>
+
+    <!-- 8. FACTORY -->
+    <section id="factory">
+        <h2>8. Factory e Configuração</h2>
+
+        <h3>8.1 <code>TCacheFactory</code></h3>
+        <p>Ponto central de criação e acesso. Oferece dois modos:</p>
+
+        <h4>Modo Singleton (padrão para aplicações)</h4>
+<pre><code>// Na inicialização da aplicação
+TCacheFactory.Initialize('10.0.0.5', 6379);
+
+// Em qualquer lugar do código
+var LManager := TCacheFactory.Manager;
+LManager.PutString('chave', 'valor');
+
+// Na finalização (opcional — feito automaticamente)
+TCacheFactory.Finalize;</code></pre>
+
+        <h4>Modo Factory (para testes ou múltiplas instâncias)</h4>
+<pre><code>var LConfig := TCacheConfig.Create;
+LConfig.Host := 'redis-cluster-1';
+LConfig.Port := 6380;
+
+var LStrategy := TCacheFactory.CreateStrategy(LConfig);
+var LSerializer := TCacheFactory.CreateSerializer;
+var LManager := TCacheFactory.CreateManager(LStrategy, LSerializer);
+
+LConfig.Free; // Config é clonada internamente</code></pre>
+
+        <h3>8.2 Eventos</h3>
+<pre><code>TCacheFactory.Manager.SetOnEvent(
+  procedure(AEvent: TCacheEvent; const AMessage: string)
+  begin
+    case AEvent of
+      ceConnected:         Log('✅ ' + AMessage);
+      ceDisconnected:      Log('❌ ' + AMessage);
+      ceReconnected:       Log('🔄 ' + AMessage);
+      ceError:             Log('⚠️ ' + AMessage);
+      ceFallbackActivated: Log('🔀 ' + AMessage);
+      cePurgeCompleted:    Log('🧹 ' + AMessage);
+    end;
+  end
+);</code></pre>
+    </section>
+
+    <!-- 9. GUIA DE USO -->
+    <section id="uso">
+        <h2>9. Guia de Uso Completo</h2>
+
+        <h3>9.1 Setup Mínimo</h3>
+<pre><code>uses
+  Cache.Factory, Cache.Config;
+
+// Inicializar
+TCacheFactory.Initialize('127.0.0.1', 6379);
+
+// Usar
+TCacheFactory.Manager.PutString('hello', 'world', 60);
+
+var LValue: string;
+if TCacheFactory.Manager.GetString('hello', LValue) then
+  Writeln(LValue); // 'world'</code></pre>
+
+        <h3>9.2 Com Horse (API REST)</h3>
+<pre><code>uses
+  Horse, Cache.Factory, Cache.Config, Cache.Middleware.Horse;
+
+begin
+  TCacheFactory.Initialize('127.0.0.1', 6379);
+  
+  // Registra middleware de cache (TTL = 2 minutos)
+  THorse.Use(TCacheMiddleware.New(TCacheFactory.Manager, 120));
+  
+  THorse.Get('/dados',
+    procedure(AReq: THorseRequest; ARes: THorseResponse)
+    begin
+      Sleep(2000); // Simula query demorada
+      ARes.Send('{"resultado":"dados pesados"}')
+          .ContentType('application/json');
+    end
+  );
+
+  // Endpoint de monitoramento (sem cache)
+  THorse.Get('/metrics',
+    procedure(AReq: THorseRequest; ARes: THorseResponse)
+    var LJSON: TJSONObject;
+    begin
+      LJSON := TCacheFactory.Monitor.GetStatsJSON;
+      try
+        ARes.Send(LJSON.ToJSON).ContentType('application/json');
+      finally
+        LJSON.Free;
+      end;
+    end
+  );
+
+  TCacheFactory.Monitor.StartCollecting;
+  THorse.Listen(9000);
+end.</code></pre>
+
+        <h3>9.3 Cache de Objetos Tipados</h3>
+<pre><code>type
+  TCliente = class
+  private
+    FId: Integer;
+    FNome: string;
+    FEmail: string;
+  public
+    property Id: Integer read FId write FId;
+    property Nome: string read FNome write FNome;
+    property Email: string read FEmail write FEmail;
+  end;
+
+// Salvar
+var LCliente := TCliente.Create;
+LCliente.Id := 1;
+LCliente.Nome := 'Rodrigo';
+LCliente.Email := 'rodrigo@email.com';
+TCacheFactory.Manager.PutObject&lt;TCliente&gt;('cliente:1', LCliente, 600);
+LCliente.Free;
+
+// Recuperar
+var LCached: TCliente;
+if TCacheFactory.Manager.GetObject&lt;TCliente&gt;('cliente:1', LCached) then
+begin
+  Writeln(LCached.Nome); // 'Rodrigo'
+  LCached.Free; // ← Não esquecer!
+end;
+
+// GetOrAdd (Cache-Aside)
+var LProduto := TCacheFactory.Manager.GetOrAdd&lt;TProduto&gt;('produto:42',
+  function: TProduto
+  begin
+    Result := FRepository.FindById(42);
+  end,
+  300
+);
+try
+  Writeln(LProduto.Nome);
+finally
+  LProduto.Free;
+end;</code></pre>
+    </section>
+
+    <!-- 10. PRÉ-REQUISITOS -->
+    <section id="prereq">
+        <h2>10. Pré-requisitos</h2>
+
+        <h3>10.1 Dependências</h3>
+        <table>
+            <thead><tr><th>Componente</th><th>Versão</th><th>Onde obter</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>Delphi</td>
+                    <td>12 Athens</td>
+                    <td>Embarcadero</td>
+                </tr>
+                <tr>
+                    <td>delphiredisclient</td>
+                    <td>Mais recente</td>
+                    <td><a href="https://github.com/danieleteti/delphiredisclient">GitHub</a></td>
+                </tr>
+                <tr>
+                    <td>Horse</td>
+                    <td>3.x+</td>
+                    <td><a href="https://github.com/HashLoad/horse">GitHub</a></td>
+                </tr>
+                <tr>
+                    <td>DUnitX</td>
+                    <td>Embutido no Delphi 12</td>
+                    <td>Instalação padrão</td>
+                </tr>
+                <tr>
+                    <td>Redis Server</td>
+                    <td>6.x+</td>
+                    <td>Docker: <code>docker run -d -p 6379:6379 redis:7-alpine</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>10.2 Instalação do delphiredisclient</h3>
+<pre><code>1. Clone: git clone https://github.com/danieleteti/delphiredisclient.git
+2. No Delphi, vá em Tools → Options → Library → Library Path
+3. Adicione o caminho da pasta "sources" do repositório clonado
+4. Compile o projeto — as units serão encontradas automaticamente</code></pre>
+
+        <h3>10.3 Redis via Docker</h3>
+<pre><code># Iniciar Redis
+docker run -d --name redis-cache -p 6379:6379 redis:7-alpine
+
+# Verificar
+docker exec -it redis-cache redis-cli ping
+# Deve retornar: PONG
+
+# Parar
+docker stop redis-cache</code></pre>
+    </section>
+
+    <!-- 11. ESTRUTURA DE PASTAS -->
+    <section id="estrutura-pastas">
+        <h2>11. Estrutura de Pastas Recomendada</h2>
+<pre><code>project-root/
+├── src/
+│   ├── Cache.Config.pas
+│   ├── Cache.Interfaces.pas
+│   ├── Cache.Serializer.pas
+│   ├── Cache.Fallback.pas
+│   ├── Cache.Strategy.Redis.pas
+│   ├── Cache.Manager.pas
+│   ├── Cache.Monitor.pas
+│   ├── Cache.Factory.pas
+│   └── Cache.Middleware.Horse.pas
+├── tests/
+│   ├── Tests.Cache.Config.pas
+│   ├── Tests.Cache.Serializer.pas
+│   ├── Tests.Cache.Stress.pas
+│   └── Tests.Runner.dpr
+├── demo/
+│   └── HorseCacheDemo.dpr
+└── docs/
+    └── documentacao.html  ← este arquivo</code></pre>
+    </section>
+
+</div>
+
+<footer>
+    <p>Módulo de Cache Redis para Delphi 12 — Documentação v1.0</p>
+    <p>Gerado em Abril de 2026</p>
+</footer>
+
+</body>
+</html>

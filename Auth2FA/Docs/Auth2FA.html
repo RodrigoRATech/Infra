@@ -1,0 +1,2728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação — Autenticação 2FA com Google Authenticator em Delphi</title>
+    <style>
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary: #1a56db;
+            --color-primary-dark: #1340a8;
+            --color-primary-light: #e8effd;
+            --color-accent: #f59e0b;
+            --color-accent-light: #fef3c7;
+            --color-success: #059669;
+            --color-success-light: #d1fae5;
+            --color-danger: #dc2626;
+            --color-danger-light: #fee2e2;
+            --color-warning: #d97706;
+            --color-warning-light: #fef9c3;
+            --color-info: #0891b2;
+            --color-info-light: #e0f7fa;
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-border: #e2e8f0;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-code-bg: #0f172a;
+            --color-code-text: #e2e8f0;
+            --color-sidebar-bg: #1e293b;
+            --color-sidebar-text: #cbd5e1;
+            --color-sidebar-active: #3b82f6;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --font-sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+            --sidebar-width: 300px;
+            --header-height: 64px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: calc(var(--header-height) + 24px);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--color-text);
+            background-color: var(--color-bg);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .header-brand svg {
+            flex-shrink: 0;
+        }
+
+        .header-brand span {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-version {
+            margin-left: 16px;
+            padding: 3px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+            border-radius: 6px;
+        }
+
+        .menu-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ============================================================
+           SIDEBAR
+           ============================================================ */
+        .sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--color-sidebar-bg);
+            color: var(--color-sidebar-text);
+            overflow-y: auto;
+            z-index: 900;
+            padding: 20px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+        }
+
+        .sidebar-section {
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            padding: 12px 12px 8px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            color: var(--color-sidebar-text);
+            text-decoration: none;
+            font-size: 0.88rem;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            margin-bottom: 1px;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+        }
+
+        .sidebar-link.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--color-sidebar-active);
+            font-weight: 600;
+        }
+
+        .sidebar-link .link-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-link .link-badge {
+            margin-left: auto;
+            padding: 1px 8px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           MAIN CONTENT
+           ============================================================ */
+        .main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        .content {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 40px 48px 80px;
+        }
+
+        /* ============================================================
+           HERO SECTION
+           ============================================================ */
+        .hero {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 50%, #db2777 100%);
+            border-radius: var(--radius-lg);
+            color: #fff;
+            padding: 48px;
+            margin-bottom: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            padding: 5px 14px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+
+        /* ============================================================
+           TYPOGRAPHY
+           ============================================================ */
+        .section {
+            margin-bottom: 56px;
+        }
+
+        .section > h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--color-text);
+            margin-bottom: 8px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--color-primary);
+            display: inline-block;
+        }
+
+        .section > h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+
+        .section > h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--color-text-secondary);
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }
+
+        .section p {
+            margin-bottom: 16px;
+            color: var(--color-text);
+        }
+
+        .section ul, .section ol {
+            margin-bottom: 16px;
+            padding-left: 24px;
+        }
+
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        .section a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .section a:hover {
+            text-decoration: underline;
+        }
+
+        strong {
+            font-weight: 700;
+        }
+
+        /* ============================================================
+           CARDS
+           ============================================================ */
+        .card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+        }
+
+        .card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* ============================================================
+           ALERT BOXES
+           ============================================================ */
+        .alert {
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-size: 0.92rem;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            font-size: 1.2rem;
+            margin-top: 1px;
+        }
+
+        .alert-info {
+            background: var(--color-info-light);
+            border-left: 4px solid var(--color-info);
+            color: #155e75;
+        }
+
+        .alert-success {
+            background: var(--color-success-light);
+            border-left: 4px solid var(--color-success);
+            color: #065f46;
+        }
+
+        .alert-warning {
+            background: var(--color-warning-light);
+            border-left: 4px solid var(--color-warning);
+            color: #92400e;
+        }
+
+        .alert-danger {
+            background: var(--color-danger-light);
+            border-left: 4px solid var(--color-danger);
+            color: #991b1b;
+        }
+
+        /* ============================================================
+           CODE BLOCKS
+           ============================================================ */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            background: #f1f5f9;
+            padding: 2px 7px;
+            border-radius: 4px;
+            color: #be185d;
+        }
+
+        .code-block {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .code-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e293b;
+            padding: 10px 20px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .code-block-header .file-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .code-block-header .lang-tag {
+            padding: 2px 10px;
+            background: rgba(59,130,246,0.2);
+            color: #60a5fa;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .code-block pre {
+            background: var(--color-code-bg);
+            color: var(--color-code-text);
+            padding: 20px 24px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.65;
+            border-radius: 0 0 var(--radius) var(--radius);
+            margin: 0;
+        }
+
+        .code-block pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            color: inherit;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #c084fc; font-weight: 600; }
+        .tp { color: #67e8f9; }
+        .st { color: #86efac; }
+        .cm { color: #64748b; font-style: italic; }
+        .fn { color: #fbbf24; }
+        .nb { color: #f472b6; }
+        .op { color: #94a3b8; }
+        .vr { color: #e2e8f0; }
+        .dr { color: #fb923c; }
+        .at { color: #60a5fa; }
+
+        /* ============================================================
+           TABLES
+           ============================================================ */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--color-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: #f1f5f9;
+        }
+
+        th {
+            padding: 12px 18px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        td {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* ============================================================
+           FLOW DIAGRAMS (ASCII-like styled)
+           ============================================================ */
+        .diagram {
+            background: var(--color-code-bg);
+            color: #60a5fa;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin-bottom: 24px;
+            white-space: pre;
+        }
+
+        .diagram .highlight {
+            color: #fbbf24;
+        }
+
+        .diagram .green {
+            color: #4ade80;
+        }
+
+        .diagram .pink {
+            color: #f472b6;
+        }
+
+        /* ============================================================
+           STEP INDICATOR
+           ============================================================ */
+        .steps {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 32px;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--color-primary), var(--color-primary-light));
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 28px;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            position: absolute;
+            left: -40px;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--color-primary);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+            font-weight: 700;
+            box-shadow: 0 0 0 4px var(--color-bg);
+        }
+
+        .step h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .step p {
+            font-size: 0.92rem;
+            color: var(--color-text-secondary);
+        }
+
+        /* ============================================================
+           CHECKLIST
+           ============================================================ */
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+
+        .checklist li {
+            padding: 8px 0 8px 32px;
+            position: relative;
+            font-size: 0.92rem;
+        }
+
+        .checklist li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            width: 22px;
+            height: 22px;
+            background: var(--color-success-light);
+            color: var(--color-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            top: 8px;
+        }
+
+        /* ============================================================
+           TOC (Table of Contents inline)
+           ============================================================ */
+        .toc-card {
+            background: linear-gradient(135deg, #eff6ff, #f5f3ff);
+            border: 1px solid #c7d2fe;
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 40px;
+        }
+
+        .toc-card h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--color-primary-dark);
+        }
+
+        .toc-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 4px 32px;
+        }
+
+        .toc-columns a {
+            display: block;
+            padding: 5px 0;
+            font-size: 0.88rem;
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .toc-columns a:hover {
+            color: var(--color-primary-dark);
+            text-decoration: underline;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            border-top: 1px solid var(--color-border);
+            margin-top: 40px;
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 24px 20px 60px;
+            }
+            .hero {
+                padding: 32px 24px;
+            }
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .toc-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================================
+           SCROLL SPY HIGHLIGHT
+           ============================================================ */
+        .sidebar-link.current {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--color-sidebar-active);
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           PRINT STYLES
+           ============================================================ */
+        @media print {
+            .header, .sidebar, .menu-toggle { display: none !important; }
+            .main { margin-left: 0 !important; margin-top: 0 !important; }
+            .hero { background: #1e40af !important; print-color-adjust: exact; }
+            .code-block pre { white-space: pre-wrap; word-break: break-all; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         HEADER
+         ============================================================ -->
+    <header class="header">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menu">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+        <div class="header-brand">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="8" fill="url(#grad)"/>
+                <path d="M9 16l4 4 10-10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="grad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+            </svg>
+            <span>Auth2FA — Delphi 12 Athens</span>
+        </div>
+        <span class="header-version">v1.0.0</span>
+    </header>
+
+    <!-- ============================================================
+         SIDEBAR
+         ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Introdução</div>
+            <a href="#visao-geral" class="sidebar-link">
+                <span class="link-icon">📖</span> Visão Geral
+            </a>
+            <a href="#pre-requisitos" class="sidebar-link">
+                <span class="link-icon">⚙️</span> Pré-Requisitos
+            </a>
+            <a href="#instalacao" class="sidebar-link">
+                <span class="link-icon">📦</span> Instalação
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Conceitos Fundamentais</div>
+            <a href="#como-funciona" class="sidebar-link">
+                <span class="link-icon">🔐</span> Como Funciona o 2FA
+            </a>
+            <a href="#rfc-totp" class="sidebar-link">
+                <span class="link-icon">📜</span> RFC 6238 — TOTP
+            </a>
+            <a href="#rfc-hotp" class="sidebar-link">
+                <span class="link-icon">📜</span> RFC 4226 — HOTP
+            </a>
+            <a href="#base32" class="sidebar-link">
+                <span class="link-icon">🔢</span> Base32 (RFC 4648)
+            </a>
+            <a href="#qr-code-uri" class="sidebar-link">
+                <span class="link-icon">📱</span> URI otpauth://
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Arquitetura</div>
+            <a href="#arquitetura" class="sidebar-link">
+                <span class="link-icon">🏗️</span> Visão Arquitetural
+            </a>
+            <a href="#padroes" class="sidebar-link">
+                <span class="link-icon">🧩</span> Padrões Aplicados
+                <span class="link-badge">SOLID+GoF</span>
+            </a>
+            <a href="#diagrama" class="sidebar-link">
+                <span class="link-icon">📐</span> Diagrama de Classes
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Referência de Units</div>
+            <a href="#unit-interfaces" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.Interfaces
+            </a>
+            <a href="#unit-config" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.Config
+            </a>
+            <a href="#unit-base32" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.Base32Codec
+            </a>
+            <a href="#unit-hmac" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.HMAC.Strategy
+            </a>
+            <a href="#unit-secret" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.SecretGenerator
+            </a>
+            <a href="#unit-qrbuilder" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.QRCodeURIBuilder
+            </a>
+            <a href="#unit-engine" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.TOTP.Engine
+            </a>
+            <a href="#unit-service" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.Service
+            </a>
+            <a href="#unit-factory" class="sidebar-link">
+                <span class="link-icon">📄</span> Auth2FA.Factory
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Guia Prático</div>
+            <a href="#guia-setup" class="sidebar-link">
+                <span class="link-icon">🚀</span> Setup do Usuário
+            </a>
+            <a href="#guia-validacao" class="sidebar-link">
+                <span class="link-icon">✅</span> Validação de Token
+            </a>
+            <a href="#guia-completo" class="sidebar-link">
+                <span class="link-icon">💡</span> Exemplo Completo
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Avançado</div>
+            <a href="#seguranca" class="sidebar-link">
+                <span class="link-icon">🛡️</span> Segurança
+            </a>
+            <a href="#testes" class="sidebar-link">
+                <span class="link-icon">🧪</span> Testes
+            </a>
+            <a href="#troubleshooting" class="sidebar-link">
+                <span class="link-icon">🔧</span> Troubleshooting
+            </a>
+        </div>
+    </aside>
+
+    <!-- ============================================================
+         MAIN CONTENT
+         ============================================================ -->
+    <main class="main">
+        <div class="content">
+
+            <!-- HERO -->
+            <div class="hero">
+                <h1>🔐 Autenticação de 2 Fatores com Google Authenticator</h1>
+                <p>Documentação completa da biblioteca Auth2FA para Delphi 12 Athens. Implementação robusta de TOTP (RFC 6238) com arquitetura SOLID, Clean Code e padrões GoF.</p>
+                <div class="hero-badges">
+                    <span class="hero-badge">Delphi 12 Athens</span>
+                    <span class="hero-badge">RFC 6238 — TOTP</span>
+                    <span class="hero-badge">RFC 4226 — HOTP</span>
+                    <span class="hero-badge">Google Authenticator</span>
+                    <span class="hero-badge">SOLID</span>
+                    <span class="hero-badge">GoF Patterns</span>
+                </div>
+            </div>
+
+            <!-- TABLE OF CONTENTS -->
+            <div class="toc-card">
+                <h3>📑 Índice da Documentação</h3>
+                <div class="toc-columns">
+                    <div>
+                        <a href="#visao-geral">1. Visão Geral</a>
+                        <a href="#pre-requisitos">2. Pré-Requisitos</a>
+                        <a href="#instalacao">3. Instalação</a>
+                        <a href="#como-funciona">4. Como Funciona o 2FA</a>
+                        <a href="#rfc-totp">5. RFC 6238 — TOTP</a>
+                        <a href="#rfc-hotp">6. RFC 4226 — HOTP</a>
+                        <a href="#base32">7. Base32 (RFC 4648)</a>
+                    </div>
+                    <div>
+                        <a href="#qr-code-uri">8. URI otpauth://</a>
+                        <a href="#arquitetura">9. Arquitetura</a>
+                        <a href="#padroes">10. Padrões Aplicados</a>
+                        <a href="#diagrama">11. Diagrama de Classes</a>
+                        <a href="#guia-setup">12. Guia: Setup do Usuário</a>
+                        <a href="#guia-validacao">13. Guia: Validação de Token</a>
+                        <a href="#seguranca">14. Segurança</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 1. VISÃO GERAL
+                 ============================================================ -->
+            <section class="section" id="visao-geral">
+                <h2>1. Visão Geral</h2>
+                <p>
+                    A biblioteca <strong>Auth2FA</strong> fornece um mecanismo completo de autenticação de dois fatores (2FA)
+                    compatível com o <strong>Google Authenticator</strong>, Microsoft Authenticator, Authy e outros aplicativos
+                    que implementam o padrão TOTP.
+                </p>
+                <p>
+                    O 2FA adiciona uma camada extra de segurança ao processo de login, exigindo que o usuário forneça,
+                    além de sua senha, um código temporário gerado em seu dispositivo móvel. Mesmo que a senha seja comprometida,
+                    o atacante não conseguirá acesso sem o código dinâmico.
+                </p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-icon" style="background: #eff6ff; color: #2563eb;">🔑</div>
+                        <h4>Segredo Compartilhado</h4>
+                        <p>Geração criptográfica de chaves secretas codificadas em Base32, compartilhadas via QR Code.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #f0fdf4; color: #16a34a;">⏱️</div>
+                        <h4>Tokens Temporais</h4>
+                        <p>Códigos de 6 dígitos que mudam a cada 30 segundos, baseados no algoritmo TOTP (RFC 6238).</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #fdf4ff; color: #a855f7;">📱</div>
+                        <h4>Compatibilidade Total</h4>
+                        <p>Funciona com Google Authenticator, Microsoft Authenticator, Authy, FreeOTP, Aegis e 2FAS Auth.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #fef3c7; color: #d97706;">🏗️</div>
+                        <h4>Arquitetura Profissional</h4>
+                        <p>Código estruturado com SOLID, Clean Code, e padrões GoF (Strategy, Factory, Facade).</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 2. PRÉ-REQUISITOS
+                 ============================================================ -->
+            <section class="section" id="pre-requisitos">
+                <h2>2. Pré-Requisitos</h2>
+
+                <ul class="checklist">
+                    <li><strong>Delphi 12 Athens</strong> (ou superior) — necessário para <code>System.Hash</code></li>
+                    <li><strong>System.Hash</strong> — unit nativa com suporte a HMAC-SHA1, HMAC-SHA256, HMAC-SHA512</li>
+                    <li><strong>System.NetEncoding</strong> — unit nativa para URL Encoding</li>
+                    <li><strong>System.DateUtils</strong> — unit nativa para manipulação de timestamps Unix</li>
+                    <li>Biblioteca para geração de <strong>QR Code</strong> (ex: DelphiZXingQRCode, Skia4Delphi ou TMS)</li>
+                    <li>Aplicativo autenticador no dispositivo móvel do usuário final</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">ℹ️</span>
+                    <div>
+                        <strong>Nota:</strong> Toda a implementação usa exclusivamente units nativas do Delphi 12.
+                        Não há dependência de bibliotecas de terceiros para o core da autenticação — apenas para a exibição
+                        do QR Code na interface.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 3. INSTALAÇÃO
+                 ============================================================ -->
+            <section class="section" id="instalacao">
+                <h2>3. Instalação</h2>
+                <p>Organize as units dentro do seu projeto seguindo a estrutura de pastas recomendada:</p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">📂 Estrutura de Pastas</span>
+                        <span class="lang-tag">Projeto</span>
+                    </div>
+                    <pre><code>SeuProjeto/
+├── Source/
+│   └── Auth2FA/
+│       ├── Auth2FA.Interfaces.pas
+│       ├── Auth2FA.Config.pas
+│       ├── Auth2FA.Base32Codec.pas
+│       ├── Auth2FA.HMAC.Strategy.pas
+│       ├── Auth2FA.SecretGenerator.pas
+│       ├── Auth2FA.QRCodeURIBuilder.pas
+│       ├── Auth2FA.TOTP.Engine.pas
+│       ├── Auth2FA.Service.pas
+│       └── Auth2FA.Factory.pas
+├── Tests/
+│   └── Auth2FA.Tests.pas
+└── SeuProjeto.dproj</code></pre>
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <h4>Copie os arquivos</h4>
+                        <p>Copie todas as 9 units para o diretório <code>Source/Auth2FA/</code> do seu projeto.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <h4>Adicione o Search Path</h4>
+                        <p>No Delphi, vá em <strong>Project &gt; Options &gt; Delphi Compiler &gt; Search Path</strong> e adicione o caminho <code>Source\Auth2FA</code>.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <h4>Use no seu código</h4>
+                        <p>Adicione <code>Auth2FA.Factory</code> e <code>Auth2FA.Interfaces</code> na cláusula <code>uses</code> da unit onde deseja integrar o 2FA.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 4. COMO FUNCIONA O 2FA
+                 ============================================================ -->
+            <section class="section" id="como-funciona">
+                <h2>4. Como Funciona o 2FA</h2>
+                <p>
+                    A autenticação de dois fatores baseada em TOTP é um protocolo onde servidor e cliente compartilham
+                    um <strong>segredo</strong> e utilizam o <strong>tempo atual</strong> como fator de sincronização.
+                </p>
+
+                <h3>4.1 Fluxo de Cadastro (Enrollment)</h3>
+                <div class="diagram"><span class="highlight">SERVIDOR</span>                                   <span class="green">USUÁRIO</span>
+    │                                            │
+    │  1. Gera segredo aleatório (20 bytes)      │
+    │  2. Codifica em Base32                     │
+    │  3. Monta URI otpauth://                   │
+    │  4. Gera QR Code com a URI                 │
+    │                                            │
+    │ ──────── Exibe QR Code ──────────────────► │
+    │                                            │
+    │                           5. Escaneia QR   │
+    │                              com o app     │
+    │                                            │
+    │                           6. App armazena  │
+    │                              o segredo     │
+    │                                            │
+    │ ◄──────── Digita token de confirmação ──── │
+    │                                            │
+    │  7. Valida token                           │
+    │  8. Salva segredo no banco (criptografado) │
+    │                                            │
+    ▼                                            ▼</div>
+
+                <h3>4.2 Fluxo de Autenticação (Login)</h3>
+                <div class="diagram"><span class="highlight">SERVIDOR</span>                                   <span class="green">USUÁRIO</span>
+    │                                            │
+    │ ◄──── 1. Login com usuário + senha ─────── │
+    │                                            │
+    │  2. Valida credenciais (1º fator) ✅       │
+    │                                            │
+    │ ──── 3. Solicita código 2FA ─────────────► │
+    │                                            │
+    │                        4. Abre o app       │
+    │                        5. Lê o código      │
+    │                                            │
+    │ ◄──── 6. Envia o código de 6 dígitos ───── │
+    │                                            │
+    │  7. Recupera segredo do banco              │
+    │  8. Gera tokens (janela ±1)                │
+    │  9. Compara com token recebido             │
+    │                                            │
+    │  <span class="green">Token válido → Acesso concedido ✅</span>         │
+    │  <span class="pink">Token inválido → Acesso negado ❌</span>          │
+    │                                            │
+    ▼                                            ▼</div>
+            </section>
+
+            <!-- ============================================================
+                 5. RFC 6238 — TOTP
+                 ============================================================ -->
+            <section class="section" id="rfc-totp">
+                <h2>5. RFC 6238 — TOTP (Time-based One-Time Password)</h2>
+                <p>
+                    O algoritmo TOTP estende o HOTP (<a href="#rfc-hotp">RFC 4226</a>) substituindo o
+                    <strong>contador sequencial</strong> por um <strong>contador derivado do tempo</strong>.
+                </p>
+
+                <h3>5.1 Fórmula Central</h3>
+                <div class="card">
+                    <p>O token TOTP é calculado pela seguinte fórmula:</p>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span class="file-name">Algoritmo TOTP</span>
+                            <span class="lang-tag">Pseudocódigo</span>
+                        </div>
+                        <pre><code><span class="cm">// T0 = Unix epoch (0)</span>
+<span class="cm">// X  = Time step (30 segundos)</span>
+<span class="cm">// T  = Tempo Unix atual em UTC</span>
+
+<span class="vr">Counter</span> <span class="op">=</span> <span class="fn">Floor</span><span class="op">(</span><span class="op">(</span><span class="vr">T</span> <span class="op">-</span> <span class="vr">T0</span><span class="op">)</span> <span class="op">/</span> <span class="vr">X</span><span class="op">)</span>
+<span class="vr">TOTP</span>    <span class="op">=</span> <span class="fn">HOTP</span><span class="op">(</span><span class="vr">Secret</span><span class="op">,</span> <span class="vr">Counter</span><span class="op">)</span>
+<span class="vr">TOTP</span>    <span class="op">=</span> <span class="fn">Truncate</span><span class="op">(</span><span class="fn">HMAC-SHA-1</span><span class="op">(</span><span class="vr">Secret</span><span class="op">,</span> <span class="vr">Counter</span><span class="op">))</span> <span class="kw">mod</span> <span class="nb">10^Digits</span></code></pre>
+                    </div>
+                </div>
+
+                <h3>5.2 Parâmetros Padrão</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parâmetro</th>
+                                <th>Valor Padrão</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>T0</code></td>
+                                <td><code>0</code></td>
+                                <td>Unix epoch (1 de janeiro de 1970 00:00:00 UTC)</td>
+                            </tr>
+                            <tr>
+                                <td><code>X (Period)</code></td>
+                                <td><code>30</code> segundos</td>
+                                <td>Janela de tempo para cada token</td>
+                            </tr>
+                            <tr>
+                                <td><code>Digits</code></td>
+                                <td><code>6</code></td>
+                                <td>Quantidade de dígitos do token</td>
+                            </tr>
+                            <tr>
+                                <td><code>Algorithm</code></td>
+                                <td><code>HMAC-SHA1</code></td>
+                                <td>Algoritmo de hash para HMAC</td>
+                            </tr>
+                            <tr>
+                                <td><code>Secret Length</code></td>
+                                <td><code>20 bytes</code> (160 bits)</td>
+                                <td>Tamanho recomendado do segredo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        <strong>Importante:</strong> O Google Authenticator <strong>ignora</strong> o parâmetro <code>period</code>
+                        da URI e <strong>sempre usa 30 segundos</strong>. Mantenha <code>Period = 30</code> para garantir compatibilidade.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 6. RFC 4226 — HOTP
+                 ============================================================ -->
+            <section class="section" id="rfc-hotp">
+                <h2>6. RFC 4226 — HOTP (HMAC-Based One-Time Password)</h2>
+                <p>
+                    O HOTP é a base do TOTP. Ele define como derivar um token numérico a partir de um HMAC.
+                    O processo ocorre em 3 etapas fundamentais:
+                </p>
+
+                <h3>6.1 Etapa 1 — Cálculo do HMAC</h3>
+                <div class="card">
+                    <p>O HMAC é calculado sobre o segredo (K) e o contador (C), ambos em bytes:</p>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span class="file-name">HMAC Computation</span>
+                            <span class="lang-tag">Pseudocódigo</span>
+                        </div>
+                        <pre><code><span class="vr">HS</span> <span class="op">=</span> <span class="fn">HMAC-SHA-1</span><span class="op">(</span><span class="vr">K</span><span class="op">,</span> <span class="vr">C</span><span class="op">)</span>  <span class="cm">// Resultado: 20 bytes (160 bits)</span></code></pre>
+                    </div>
+                </div>
+
+                <h3>6.2 Etapa 2 — Dynamic Truncation</h3>
+                <div class="card">
+                    <p>Os 20 bytes do HMAC são truncados para um inteiro de 31 bits:</p>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span class="file-name">Dynamic Truncation (RFC 4226, §5.4)</span>
+                            <span class="lang-tag">Pseudocódigo</span>
+                        </div>
+                        <pre><code><span class="cm">// 1. Pega os últimos 4 bits do último byte como offset</span>
+<span class="vr">Offset</span> <span class="op">=</span> <span class="vr">HS</span><span class="op">[</span><span class="nb">19</span><span class="op">]</span> <span class="op">&amp;</span> <span class="nb">0x0F</span>
+
+<span class="cm">// 2. Extrai 4 bytes a partir do offset (mascarando bit de sinal)</span>
+<span class="vr">BinaryCode</span> <span class="op">=</span> <span class="op">(</span><span class="vr">HS</span><span class="op">[</span><span class="vr">Offset</span><span class="op">]</span>     <span class="op">&amp;</span> <span class="nb">0x7F</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="nb">24</span>
+            <span class="op">|</span> <span class="op">(</span><span class="vr">HS</span><span class="op">[</span><span class="vr">Offset</span><span class="op">+</span><span class="nb">1</span><span class="op">]</span> <span class="op">&amp;</span> <span class="nb">0xFF</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="nb">16</span>
+            <span class="op">|</span> <span class="op">(</span><span class="vr">HS</span><span class="op">[</span><span class="vr">Offset</span><span class="op">+</span><span class="nb">2</span><span class="op">]</span> <span class="op">&amp;</span> <span class="nb">0xFF</span><span class="op">)</span> <span class="op">&lt;&lt;</span> <span class="nb">8</span>
+            <span class="op">|</span> <span class="op">(</span><span class="vr">HS</span><span class="op">[</span><span class="vr">Offset</span><span class="op">+</span><span class="nb">3</span><span class="op">]</span> <span class="op">&amp;</span> <span class="nb">0xFF</span><span class="op">)</span>
+
+<span class="cm">// 3. Aplica módulo para obter N dígitos</span>
+<span class="vr">Token</span> <span class="op">=</span> <span class="vr">BinaryCode</span> <span class="kw">mod</span> <span class="nb">10^6</span>  <span class="cm">// → Resultado: 000000 a 999999</span></code></pre>
+                    </div>
+                </div>
+
+                <h3>6.3 Etapa 3 — Formatação</h3>
+                <p>O resultado inteiro é formatado com zeros à esquerda para garantir exatamente 6 dígitos:</p>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Formatação</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="vr">Result</span> <span class="op">:=</span> <span class="fn">Format</span><span class="op">(</span><span class="st">'%.*d'</span><span class="op">,</span> <span class="op">[</span><span class="vr">FDigits</span><span class="op">,</span> <span class="vr">LToken</span><span class="op">]</span><span class="op">);</span>
+<span class="cm">// Exemplo: 482913 → '482913'</span>
+<span class="cm">// Exemplo: 7241   → '007241'</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 7. BASE32 (RFC 4648)
+                 ============================================================ -->
+            <section class="section" id="base32">
+                <h2>7. Codificação Base32 (RFC 4648)</h2>
+                <p>
+                    O segredo compartilhado é codificado em <strong>Base32</strong> para facilitar a transmissão
+                    via QR Code e digitação manual. O alfabeto utilizado é:
+                </p>
+
+                <div class="card">
+                    <h4>Alfabeto Base32</h4>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span class="file-name">Tabela de Caracteres</span>
+                            <span class="lang-tag">RFC 4648</span>
+                        </div>
+                        <pre><code><span class="st">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 2 3 4 5 6 7</span>
+<span class="cm">0 1 2 3 4 5 6 7 8 9 ...                                      31</span>
+
+<span class="cm">• Cada caractere representa 5 bits</span>
+<span class="cm">• Padding com '=' até completar múltiplo de 8 caracteres</span>
+<span class="cm">• Case-insensitive (A = a)</span>
+<span class="cm">• Não usa 0, 1, 8, 9 (evita confusão com O, I, B, g)</span></code></pre>
+                    </div>
+                </div>
+
+                <h3>7.1 Exemplo de Encode/Decode</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bytes (hex)</th>
+                                <th>Base32</th>
+                                <th>Tamanho</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>48 65 6C 6C 6F</code></td>
+                                <td><code>JBSWY3DP</code></td>
+                                <td>5 bytes → 8 chars</td>
+                            </tr>
+                            <tr>
+                                <td><code>20 bytes aleatórios</code></td>
+                                <td><code>JBSWY3DPEHPK3PXP...</code></td>
+                                <td>20 bytes → 32 chars</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 8. URI otpauth://
+                 ============================================================ -->
+            <section class="section" id="qr-code-uri">
+                <h2>8. URI otpauth:// (Provisioning)</h2>
+                <p>
+                    Para que o aplicativo autenticador reconheça as credenciais, é necessário montar uma URI
+                    no formato <code>otpauth://</code> e apresentá-la como QR Code ao usuário.
+                </p>
+
+                <h3>8.1 Formato da URI</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Formato otpauth://</span>
+                        <span class="lang-tag">URI</span>
+                    </div>
+                    <pre><code><span class="kw">otpauth://totp/</span><span class="st">{Issuer}</span><span class="op">:</span><span class="st">{Account}</span><span class="op">?</span><span class="vr">secret</span><span class="op">=</span><span class="st">{Secret}</span><span class="op">&amp;</span><span class="vr">issuer</span><span class="op">=</span><span class="st">{Issuer}</span><span class="op">&amp;</span><span class="vr">algorithm</span><span class="op">=</span><span class="st">{Algo}</span><span class="op">&amp;</span><span class="vr">digits</span><span class="op">=</span><span class="st">{Digits}</span><span class="op">&amp;</span><span class="vr">period</span><span class="op">=</span><span class="st">{Period}</span></code></pre>
+                </div>
+
+                <h3>8.2 Parâmetros</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Parâmetro</th>
+                                <th>Obrigatório</th>
+                                <th>Exemplo</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Issuer</code> (label)</td>
+                                <td>✅ Sim</td>
+                                <td><code>MinhaEmpresa</code></td>
+                                <td>Nome da empresa/aplicação (exibido no app)</td>
+                            </tr>
+                            <tr>
+                                <td><code>Account</code> (label)</td>
+                                <td>✅ Sim</td>
+                                <td><code>user@email.com</code></td>
+                                <td>Identificação da conta do usuário</td>
+                            </tr>
+                            <tr>
+                                <td><code>secret</code></td>
+                                <td>✅ Sim</td>
+                                <td><code>JBSWY3DPEHPK3PXP</code></td>
+                                <td>Segredo em Base32 (sem padding)</td>
+                            </tr>
+                            <tr>
+                                <td><code>issuer</code></td>
+                                <td>⚡ Recomendado</td>
+                                <td><code>MinhaEmpresa</code></td>
+                                <td>Redundância para compatibilidade</td>
+                            </tr>
+                            <tr>
+                                <td><code>algorithm</code></td>
+                                <td>Opcional</td>
+                                <td><code>SHA1</code></td>
+                                <td>SHA1 (padrão), SHA256 ou SHA512</td>
+                            </tr>
+                            <tr>
+                                <td><code>digits</code></td>
+                                <td>Opcional</td>
+                                <td><code>6</code></td>
+                                <td>Número de dígitos (6, 7 ou 8)</td>
+                            </tr>
+                            <tr>
+                                <td><code>period</code></td>
+                                <td>Opcional</td>
+                                <td><code>30</code></td>
+                                <td>Intervalo em segundos (Google Authenticator ignora este valor)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>8.3 Exemplo Real</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">URI Gerada</span>
+                        <span class="lang-tag">Exemplo</span>
+                    </div>
+                    <pre><code>otpauth://totp/MinhaEmpresa:rodrigo%40empresa.com.br?secret=JBSWY3DPEHPK3PXP&amp;issuer=MinhaEmpresa&amp;algorithm=SHA1&amp;digits=6&amp;period=30</code></pre>
+                </div>
+
+                <div class="alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    <div>
+                        <strong>Dica:</strong> Use esta URI para gerar um QR Code. O usuário escaneia com o
+                        Google Authenticator e o segredo é automaticamente cadastrado no app.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 9. ARQUITETURA
+                 ============================================================ -->
+            <section class="section" id="arquitetura">
+                <h2>9. Visão Arquitetural</h2>
+                <p>
+                    A arquitetura foi projetada para ser <strong>modular</strong>, <strong>testável</strong> e
+                    <strong>extensível</strong>. Cada componente possui responsabilidade única e se comunica
+                    exclusivamente por meio de <strong>interfaces</strong>.
+                </p>
+
+                <h3>9.1 Mapa de Units</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Unit</th>
+                                <th>Responsabilidade</th>
+                                <th>Padrão</th>
+                                <th>Depende de</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Auth2FA.Interfaces</code></td>
+                                <td>Contratos (interfaces e tipos)</td>
+                                <td>DIP / ISP</td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.Config</code></td>
+                                <td>Configuração TOTP</td>
+                                <td>SRP</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.Base32Codec</code></td>
+                                <td>Encode/Decode Base32</td>
+                                <td>SRP</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.HMAC.Strategy</code></td>
+                                <td>Algoritmos HMAC intercambiáveis</td>
+                                <td>Strategy + Factory</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.SecretGenerator</code></td>
+                                <td>Geração de segredos criptográficos</td>
+                                <td>SRP</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.QRCodeURIBuilder</code></td>
+                                <td>Construção da URI otpauth://</td>
+                                <td>SRP / Builder</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.TOTP.Engine</code></td>
+                                <td>Cálculo TOTP (RFC 6238)</td>
+                                <td>SRP</td>
+                                <td>Interfaces</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.Service</code></td>
+                                <td>Orquestração do fluxo 2FA</td>
+                                <td>Facade</td>
+                                <td>Interfaces, Engine</td>
+                            </tr>
+                            <tr>
+                                <td><code>Auth2FA.Factory</code></td>
+                                <td>Montagem das dependências</td>
+                                <td>Factory Method</td>
+                                <td>Todas</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 10. PADRÕES APLICADOS
+                 ============================================================ -->
+            <section class="section" id="padroes">
+                <h2>10. Padrões de Projeto Aplicados</h2>
+
+                <h3>10.1 Princípios SOLID</h3>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-icon" style="background: #dbeafe; color: #2563eb;">S</div>
+                        <h4>Single Responsibility (SRP)</h4>
+                        <p>Cada classe tem exatamente uma razão para mudar. Ex: <code>TBase32Codec</code> só cuida de Base32; <code>TTOTPEngine</code> só calcula tokens.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #dcfce7; color: #16a34a;">O</div>
+                        <h4>Open/Closed (OCP)</h4>
+                        <p>Novos algoritmos HMAC (ex: SHA3) podem ser adicionados criando uma nova classe que implementa <code>IHMACStrategy</code>, sem alterar código existente.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #fef3c7; color: #d97706;">L</div>
+                        <h4>Liskov Substitution (LSP)</h4>
+                        <p>Qualquer implementação de <code>IHMACStrategy</code> pode ser usada no lugar de outra sem quebrar o funcionamento.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #fce7f3; color: #db2777;">I</div>
+                        <h4>Interface Segregation (ISP)</h4>
+                        <p>Interfaces granulares: <code>IBase32Codec</code>, <code>IHMACStrategy</code>, <code>ISecretGenerator</code> — cada uma com métodos coesos.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #ede9fe; color: #7c3aed;">D</div>
+                        <h4>Dependency Inversion (DIP)</h4>
+                        <p>Módulos de alto nível (<code>TTwoFactorAuthService</code>) dependem de abstrações (interfaces), não de implementações concretas.</p>
+                    </div>
+                </div>
+
+                <h3>10.2 Padrões GoF</h3>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <div class="card-icon" style="background: #fff7ed; color: #ea580c;">🎯</div>
+                        <h4>Strategy</h4>
+                        <p>Algoritmos HMAC (SHA1, SHA256, SHA512) são intercambiáveis em tempo de execução via <code>IHMACStrategy</code>.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #ecfdf5; color: #059669;">🏭</div>
+                        <h4>Factory Method</h4>
+                        <p><code>THMACStrategyFactory</code> cria a estratégia correta a partir do enum <code>TTOTPAlgorithm</code>. <code>TTwoFactorAuthFactory</code> monta todo o grafo de dependências.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon" style="background: #f0f9ff; color: #0284c7;">🎭</div>
+                        <h4>Facade</h4>
+                        <p><code>TTwoFactorAuthService</code> é a fachada que simplifica a interação com todos os subsistemas internos (Engine, Codec, Generator, etc.).</p>
+                    </div>
+                </div>
+
+                <h3>10.3 Clean Code</h3>
+                <ul class="checklist">
+                    <li>Nomes descritivos e intencionais em todas as classes, métodos e variáveis</li>
+                    <li>Métodos curtos com responsabilidade única (máximo ~20 linhas)</li>
+                    <li>Validações de entrada com mensagens de erro claras (<code>Guard Clauses</code>)</li>
+                    <li>Documentação XML em todos os métodos públicos</li>
+                    <li>Prefixos de nomenclatura Delphi: <code>T</code> (classes), <code>I</code> (interfaces), <code>F</code> (fields), <code>A</code> (args), <code>L</code> (locals)</li>
+                    <li>Limpeza de dados sensíveis da memória com <code>FillChar</code></li>
+                    <li>Separação de concerns em <code>strict private</code>, <code>private</code> e <code>public</code></li>
+                </ul>
+            </section>
+
+            <!-- ============================================================
+                 11. DIAGRAMA DE CLASSES
+                 ============================================================ -->
+            <section class="section" id="diagrama">
+                <h2>11. Diagrama de Classes</h2>
+
+                <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      <span class="highlight">TTwoFactorAuthFactory</span>                              │
+│                        (Factory Method)                                 │
+│  + CreateDefault(Issuer, Account): ITwoFactorAuthService               │
+│  + CreateCustom(Config): ITwoFactorAuthService                         │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │ <span class="green">cria e injeta dependências</span>
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    <span class="highlight">TTwoFactorAuthService</span>                               │
+│                   (ITwoFactorAuthService)                               │
+│                        <span class="pink">[FACADE]</span>                                       │
+│                                                                         │
+│  + GenerateSecret(): string                                             │
+│  + GenerateToken(SecretBase32): string                                  │
+│  + ValidateToken(SecretBase32, Token): TTOTPValidationResult            │
+│  + GetProvisioningURI(SecretBase32): string                             │
+│  + GetRemainingSeconds(): Integer                                       │
+│                                                                         │
+│  ┌───────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐  │
+│  │<span class="green">ISecretGenerator</span>│ │ <span class="green">ITOTPConfig</span>  │ │<span class="green">IQRCodeURI</span>   │ │ <span class="green">TTOTPEngine</span> │  │
+│  │               │ │              │ │<span class="green">Builder</span>      │ │              │  │
+│  └───────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘  │
+└──────────┼────────────────┼────────────────┼────────────────┼──────────┘
+           │                │                │                │
+           ▼                ▼                ▼                ▼
+┌───────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
+│<span class="highlight">TSecretGenerator</span>│  │ <span class="highlight">TTOTPConfig</span>  │  │<span class="highlight">TQRCodeURI</span>   │  │  <span class="highlight">TTOTPEngine</span>     │
+│               │  │              │  │<span class="highlight">Builder</span>      │  │                  │
+│ +Generate()   │  │ .Digits=6    │  │              │  │ +GenerateToken() │
+│ +GenerateB32()│  │ .Period=30   │  │ +Build()     │  │ -CounterToBytes()│
+│               │  │ .Algorithm   │  │              │  │ -DynTruncation() │
+│ ┌───────────┐ │  │ .Tolerance   │  │              │  │                  │
+│ │<span class="green">IBase32Codec</span>│ │  │ .Issuer      │  │              │  │ ┌──────────────┐ │
+│ └─────┬─────┘ │  │ .AccountName │  │              │  │ │<span class="green">IHMACStrategy</span> │ │
+│       │       │  │              │  │              │  │ │  <span class="pink">[STRATEGY]</span>  │ │
+└───────┼───────┘  └──────────────┘  └──────────────┘  │ └──────┬───────┘ │
+        │                                               │        │         │
+        ▼                                               │        ▼         │
+┌───────────────┐                                       │ ┌──────────────┐ │
+│ <span class="highlight">TBase32Codec</span>  │                                       │ │<span class="highlight">HMACStrategy</span> │ │
+│               │                                       │ │<span class="highlight">Factory</span>      │ │
+│ +Encode()     │                                       │ │              │ │
+│ +Decode()     │                                       │ │  ┌────────┐  │ │
+│               │                                       │ │  │<span class="green">SHA1</span>    │  │ │
+└───────────────┘                                       │ │  │<span class="green">SHA256</span>  │  │ │
+                                                        │ │  │<span class="green">SHA512</span>  │  │ │
+                                                        │ │  └────────┘  │ │
+                                                        │ └──────────────┘ │
+                                                        └──────────────────┘</div>
+            </section>
+
+            <!-- ============================================================
+                 12. REFERÊNCIA: INTERFACES
+                 ============================================================ -->
+            <section class="section" id="unit-interfaces">
+                <h2>Referência — Auth2FA.Interfaces</h2>
+                <p>
+                    Unit central que define todos os <strong>contratos</strong> (interfaces) e <strong>tipos</strong>
+                    usados pela biblioteca. Nenhuma implementação concreta — apenas abstrações.
+                </p>
+
+                <h3>Tipos</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Natureza</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>TTOTPAlgorithm</code></td>
+                                <td>Enum</td>
+                                <td>Algoritmos suportados: <code>taSHA1</code>, <code>taSHA256</code>, <code>taSHA512</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>TTOTPValidationResult</code></td>
+                                <td>Record</td>
+                                <td>Resultado da validação com <code>IsValid</code> e <code>MatchedStep</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Interfaces</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Interface</th>
+                                <th>Métodos Principais</th>
+                                <th>Propósito</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>ITOTPConfig</code></td>
+                                <td>Properties: Digits, Period, Algorithm, ToleranceSteps, Issuer, AccountName</td>
+                                <td>Configuração do TOTP</td>
+                            </tr>
+                            <tr>
+                                <td><code>IBase32Codec</code></td>
+                                <td><code>Encode(TBytes): string</code>, <code>Decode(string): TBytes</code></td>
+                                <td>Codificação Base32</td>
+                            </tr>
+                            <tr>
+                                <td><code>IHMACStrategy</code></td>
+                                <td><code>ComputeHMAC(Key, Message): TBytes</code></td>
+                                <td>Cálculo HMAC</td>
+                            </tr>
+                            <tr>
+                                <td><code>ISecretGenerator</code></td>
+                                <td><code>Generate(Length): TBytes</code>, <code>GenerateBase32(Length): string</code></td>
+                                <td>Geração de segredos</td>
+                            </tr>
+                            <tr>
+                                <td><code>IQRCodeURIBuilder</code></td>
+                                <td><code>Build(Secret, Config): string</code></td>
+                                <td>Montagem da URI otpauth://</td>
+                            </tr>
+                            <tr>
+                                <td><code>ITwoFactorAuthService</code></td>
+                                <td><code>GenerateSecret</code>, <code>GenerateToken</code>, <code>ValidateToken</code>, <code>GetProvisioningURI</code>, <code>GetRemainingSeconds</code></td>
+                                <td>Serviço principal (Facade)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>TTOTPValidationResult</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Auth2FA.Interfaces.pas</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">type</span>
+  <span class="tp">TTOTPValidationResult</span> <span class="op">=</span> <span class="kw">record</span>
+    <span class="vr">IsValid</span><span class="op">:</span> <span class="tp">Boolean</span><span class="op">;</span>
+    <span class="vr">MatchedStep</span><span class="op">:</span> <span class="tp">Integer</span><span class="op">;</span> <span class="cm">// -1 = token do passado, 0 = exato, +1 = futuro</span>
+    <span class="kw">class function</span> <span class="fn">Success</span><span class="op">(</span><span class="kw">const</span> <span class="vr">AStep</span><span class="op">:</span> <span class="tp">Integer</span><span class="op">):</span> <span class="tp">TTOTPValidationResult</span><span class="op">;</span> <span class="kw">static</span><span class="op">;</span>
+    <span class="kw">class function</span> <span class="fn">Failure</span><span class="op">:</span> <span class="tp">TTOTPValidationResult</span><span class="op">;</span> <span class="kw">static</span><span class="op">;</span>
+  <span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+
+                <div class="alert alert-info">
+                    <span class="alert-icon">ℹ️</span>
+                    <div>
+                        O campo <code>MatchedStep</code> indica em qual janela de tolerância o match ocorreu.
+                        Valor <code>0</code> significa que o token combina com a janela de tempo atual.
+                        Valores <code>-1</code> ou <code>+1</code> indicam a janela anterior ou seguinte,
+                        o que pode sinalizar relógios levemente dessincronizados.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: CONFIG
+                 ============================================================ -->
+            <section class="section" id="unit-config">
+                <h2>Referência — Auth2FA.Config</h2>
+                <p>
+                    Implementação da <code>ITOTPConfig</code>. Armazena todas as configurações do TOTP
+                    com validações de integridade nos setters.
+                </p>
+
+                <h3>Valores Padrão (Google Authenticator)</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Propriedade</th>
+                                <th>Padrão</th>
+                                <th>Validação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Digits</code></td>
+                                <td><code>6</code></td>
+                                <td>Aceita apenas 6, 7 ou 8</td>
+                            </tr>
+                            <tr>
+                                <td><code>Period</code></td>
+                                <td><code>30</code> (segundos)</td>
+                                <td>Deve ser &gt; 0</td>
+                            </tr>
+                            <tr>
+                                <td><code>Algorithm</code></td>
+                                <td><code>taSHA1</code></td>
+                                <td>Enum válido</td>
+                            </tr>
+                            <tr>
+                                <td><code>ToleranceSteps</code></td>
+                                <td><code>1</code></td>
+                                <td>Deve ser ≥ 0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Criação Rápida</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Uso do CreateDefault</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">var</span>
+  <span class="vr">LConfig</span><span class="op">:</span> <span class="tp">ITOTPConfig</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="cm">// Cria com valores padrão do Google Authenticator</span>
+  <span class="vr">LConfig</span> <span class="op">:=</span> <span class="tp">TTOTPConfig</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span><span class="st">'MinhaEmpresa'</span><span class="op">,</span> <span class="st">'usuario@email.com'</span><span class="op">);</span>
+
+  <span class="cm">// Customizar se necessário</span>
+  <span class="vr">LConfig</span><span class="op">.</span><span class="vr">Digits</span> <span class="op">:=</span> <span class="nb">8</span><span class="op">;</span>         <span class="cm">// 8 dígitos</span>
+  <span class="vr">LConfig</span><span class="op">.</span><span class="vr">ToleranceSteps</span> <span class="op">:=</span> <span class="nb">2</span><span class="op">;</span>  <span class="cm">// ±2 janelas (±60s)</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: BASE32
+                 ============================================================ -->
+            <section class="section" id="unit-base32">
+                <h2>Referência — Auth2FA.Base32Codec</h2>
+                <p>
+                    Implementação completa do codec Base32 conforme RFC 4648. Utilizado para codificar/decodificar
+                    o segredo compartilhado.
+                </p>
+
+                <h3>Métodos</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Entrada</th>
+                                <th>Saída</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Encode</code></td>
+                                <td><code>TBytes</code></td>
+                                <td><code>string</code></td>
+                                <td>Converte bytes em string Base32 com padding</td>
+                            </tr>
+                            <tr>
+                                <td><code>Decode</code></td>
+                                <td><code>string</code></td>
+                                <td><code>TBytes</code></td>
+                                <td>Converte string Base32 em bytes (ignora padding e espaços)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Exemplo de Uso Direto</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Base32 Encode/Decode</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">var</span>
+  <span class="vr">LCodec</span><span class="op">:</span> <span class="tp">IBase32Codec</span><span class="op">;</span>
+  <span class="vr">LEncoded</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LDecoded</span><span class="op">:</span> <span class="tp">TBytes</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LCodec</span> <span class="op">:=</span> <span class="tp">TBase32Codec</span><span class="op">.</span><span class="fn">Create</span><span class="op">;</span>
+
+  <span class="cm">// Encode</span>
+  <span class="vr">LEncoded</span> <span class="op">:=</span> <span class="vr">LCodec</span><span class="op">.</span><span class="fn">Encode</span><span class="op">(</span><span class="fn">TEncoding</span><span class="op">.</span><span class="vr">UTF8</span><span class="op">.</span><span class="fn">GetBytes</span><span class="op">(</span><span class="st">'Hello'</span><span class="op">));</span>
+  <span class="cm">// Resultado: 'JBSWY3DP'</span>
+
+  <span class="cm">// Decode</span>
+  <span class="vr">LDecoded</span> <span class="op">:=</span> <span class="vr">LCodec</span><span class="op">.</span><span class="fn">Decode</span><span class="op">(</span><span class="st">'JBSWY3DP'</span><span class="op">);</span>
+  <span class="cm">// Resultado: [72, 101, 108, 108, 111] = 'Hello'</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: HMAC STRATEGY
+                 ============================================================ -->
+            <section class="section" id="unit-hmac">
+                <h2>Referência — Auth2FA.HMAC.Strategy</h2>
+                <p>
+                    Implementa o padrão <strong>Strategy</strong> para algoritmos HMAC. Cada algoritmo é uma classe
+                    independente que implementa <code>IHMACStrategy</code>. A seleção é feita via <strong>Factory</strong>.
+                </p>
+
+                <h3>Estratégias Disponíveis</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Classe</th>
+                                <th>Algoritmo</th>
+                                <th>Hash Size</th>
+                                <th>Google Auth</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>THMACSHA1Strategy</code></td>
+                                <td>HMAC-SHA1</td>
+                                <td>160 bits (20 bytes)</td>
+                                <td>✅ Compatível (padrão)</td>
+                            </tr>
+                            <tr>
+                                <td><code>THMACSHA256Strategy</code></td>
+                                <td>HMAC-SHA256</td>
+                                <td>256 bits (32 bytes)</td>
+                                <td>⚠️ Suporte parcial</td>
+                            </tr>
+                            <tr>
+                                <td><code>THMACSHA512Strategy</code></td>
+                                <td>HMAC-SHA512</td>
+                                <td>512 bits (64 bytes)</td>
+                                <td>⚠️ Suporte parcial</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        <strong>Recomendação:</strong> Use <code>taSHA1</code> para máxima compatibilidade com o Google Authenticator.
+                        Os algoritmos SHA256 e SHA512 são suportados pela RFC 6238, mas nem todos os apps autenticadores
+                        os implementam corretamente.
+                    </div>
+                </div>
+
+                <h3>Extensibilidade (OCP)</h3>
+                <p>Para adicionar um novo algoritmo, basta criar uma nova classe:</p>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Exemplo: Adicionando SHA3 (futuro)</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">type</span>
+  <span class="tp">THMACSHA3Strategy</span> <span class="op">=</span> <span class="kw">class</span><span class="op">(</span><span class="tp">THMACStrategyBase</span><span class="op">)</span>
+  <span class="kw">public</span>
+    <span class="kw">function</span> <span class="fn">ComputeHMAC</span><span class="op">(</span><span class="kw">const</span> <span class="vr">AKey</span><span class="op">,</span> <span class="vr">AMessage</span><span class="op">:</span> <span class="tp">TBytes</span><span class="op">):</span> <span class="tp">TBytes</span><span class="op">;</span> <span class="kw">override</span><span class="op">;</span>
+    <span class="kw">function</span> <span class="fn">GetAlgorithmName</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span> <span class="kw">override</span><span class="op">;</span>
+  <span class="kw">end</span><span class="op">;</span>
+
+<span class="cm">// Nenhuma alteração necessária nas classes existentes! (OCP)</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: SECRET GENERATOR
+                 ============================================================ -->
+            <section class="section" id="unit-secret">
+                <h2>Referência — Auth2FA.SecretGenerator</h2>
+                <p>
+                    Gera segredos aleatórios para compartilhamento entre servidor e aplicativo autenticador.
+                    O tamanho padrão é de <strong>20 bytes (160 bits)</strong>, conforme recomendado pela RFC 6238.
+                </p>
+
+                <h3>Métodos</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Retorno</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Generate(ALength)</code></td>
+                                <td><code>TBytes</code></td>
+                                <td>Retorna bytes aleatórios crus</td>
+                            </tr>
+                            <tr>
+                                <td><code>GenerateBase32(ALength)</code></td>
+                                <td><code>string</code></td>
+                                <td>Gera bytes e retorna codificado em Base32</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-danger">
+                    <span class="alert-icon">🔴</span>
+                    <div>
+                        <strong>Segurança em Produção:</strong> A implementação padrão usa <code>Random()</code>.
+                        Para ambientes de produção com requisitos de segurança elevados, substitua pela API do SO:
+                        <br>
+                        • <strong>Windows:</strong> <code>BCryptGenRandom</code> (via WinAPI)
+                        <br>
+                        • <strong>Cross-platform:</strong> <code>OpenSSL RAND_bytes</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: QR CODE URI BUILDER
+                 ============================================================ -->
+            <section class="section" id="unit-qrbuilder">
+                <h2>Referência — Auth2FA.QRCodeURIBuilder</h2>
+                <p>
+                    Constrói a URI <code>otpauth://</code> usada para provisioning via QR Code.
+                    Aplica URL encoding nos parâmetros e valida campos obrigatórios.
+                </p>
+
+                <h3>Validações</h3>
+                <ul>
+                    <li><code>Secret</code> não pode ser vazio → <code>EArgumentException</code></li>
+                    <li><code>Issuer</code> é obrigatório → <code>EArgumentException</code></li>
+                    <li>Caracteres especiais no <code>AccountName</code> são automaticamente URL-encoded</li>
+                </ul>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: TOTP ENGINE
+                 ============================================================ -->
+            <section class="section" id="unit-engine">
+                <h2>Referência — Auth2FA.TOTP.Engine</h2>
+                <p>
+                    O <strong>coração da biblioteca</strong>. Implementa o algoritmo TOTP conforme RFC 6238,
+                    incluindo conversão Big-Endian do contador e Dynamic Truncation (RFC 4226 §5.4).
+                </p>
+
+                <h3>Fluxo Interno do GenerateToken</h3>
+                <div class="steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <h4>Decode Base32</h4>
+                        <p>O segredo Base32 é decodificado para bytes usando <code>IBase32Codec.Decode</code>.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <h4>Calcula o Counter</h4>
+                        <p>O tempo Unix UTC é dividido pelo período (30s): <code>Counter = UnixTime div 30</code>.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <h4>Counter → Big-Endian Bytes</h4>
+                        <p>O counter (Int64) é convertido para array de 8 bytes em formato Big-Endian.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">4</span>
+                        <h4>HMAC</h4>
+                        <p>Calcula <code>HMAC(Secret, CounterBytes)</code> usando a estratégia injetada.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">5</span>
+                        <h4>Dynamic Truncation</h4>
+                        <p>Os bytes HMAC são truncados para um inteiro de 31 bits e aplica-se módulo <code>10^Digits</code>.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">6</span>
+                        <h4>Formatação</h4>
+                        <p>O inteiro é formatado com zeros à esquerda: <code>Format('%.*d', [6, Token])</code>.</p>
+                    </div>
+                </div>
+
+                <h3>Métodos Públicos</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>GenerateToken(SecretBase32, UnixTime): string</code></td>
+                                <td>Gera o token TOTP para um segredo e instante específico</td>
+                            </tr>
+                            <tr>
+                                <td><code>GetCurrentUnixTime: Int64</code> (class)</td>
+                                <td>Retorna o timestamp Unix UTC atual</td>
+                            </tr>
+                            <tr>
+                                <td><code>GetRemainingSeconds: Integer</code></td>
+                                <td>Segundos restantes na janela de tempo atual</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: SERVICE
+                 ============================================================ -->
+            <section class="section" id="unit-service">
+                <h2>Referência — Auth2FA.Service</h2>
+                <p>
+                    <strong>Facade</strong> que orquestra todos os componentes. É o ponto de entrada principal
+                    para os consumidores da biblioteca. Recebe todas as dependências via construtor (DIP).
+                </p>
+
+                <h3>API Pública</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Retorno</th>
+                                <th>Quando Usar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>GenerateSecret</code></td>
+                                <td><code>string</code> (Base32)</td>
+                                <td>No cadastro do 2FA do usuário</td>
+                            </tr>
+                            <tr>
+                                <td><code>GenerateToken(SecretBase32)</code></td>
+                                <td><code>string</code> (6 dígitos)</td>
+                                <td>Para debug/testes; exibir o token no lado servidor</td>
+                            </tr>
+                            <tr>
+                                <td><code>ValidateToken(SecretBase32, Token)</code></td>
+                                <td><code>TTOTPValidationResult</code></td>
+                                <td>No login — validar o código do usuário</td>
+                            </tr>
+                            <tr>
+                                <td><code>GetProvisioningURI(SecretBase32)</code></td>
+                                <td><code>string</code> (URI)</td>
+                                <td>Para gerar o QR Code no cadastro</td>
+                            </tr>
+                            <tr>
+                                <td><code>GetRemainingSeconds</code></td>
+                                <td><code>Integer</code></td>
+                                <td>Para UI — exibir countdown do token</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Janela de Tolerância</h3>
+                <p>
+                    A validação verifica o token em múltiplas janelas de tempo para acomodar
+                    relógios levemente dessincronizados:
+                </p>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Janela de Validação (ToleranceSteps = 1)</span>
+                        <span class="lang-tag">Diagrama</span>
+                    </div>
+                    <pre><code>         <span class="cm">Passado</span>         <span class="green">Presente</span>         <span class="cm">Futuro</span>
+    ┌──────────────┬──────────────┬──────────────┐
+    │  Step = -1   │  <span class="green">Step = 0</span>    │  Step = +1   │
+    │  -30s ~ 0s   │  <span class="green">0s ~ +30s</span>   │  +30s ~ +60s │
+    └──────────────┴──────────────┴──────────────┘
+           ✅              <span class="green">✅</span>              ✅
+    <span class="cm">Todos são aceitos para acomodar clock drift</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 REFERÊNCIA: FACTORY
+                 ============================================================ -->
+            <section class="section" id="unit-factory">
+                <h2>Referência — Auth2FA.Factory</h2>
+                <p>
+                    <strong>Factory Method</strong> que encapsula a criação e montagem de todas as dependências.
+                    Oferece dois métodos: um para configuração padrão e outro para configuração customizada.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Métodos da Factory</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="cm">// 1. Configuração padrão (Google Authenticator)</span>
+<span class="vr">LService</span> <span class="op">:=</span> <span class="tp">TTwoFactorAuthFactory</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span>
+  <span class="st">'MinhaEmpresa'</span><span class="op">,</span>           <span class="cm">// Issuer</span>
+  <span class="st">'rodrigo@empresa.com.br'</span>  <span class="cm">// AccountName</span>
+<span class="op">);</span>
+
+<span class="cm">// 2. Configuração customizada</span>
+<span class="kw">var</span>
+  <span class="vr">LConfig</span><span class="op">:</span> <span class="tp">ITOTPConfig</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LConfig</span> <span class="op">:=</span> <span class="tp">TTOTPConfig</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span><span class="st">'MinhaEmpresa'</span><span class="op">,</span> <span class="st">'user@email.com'</span><span class="op">);</span>
+  <span class="vr">LConfig</span><span class="op">.</span><span class="vr">Digits</span> <span class="op">:=</span> <span class="nb">8</span><span class="op">;</span>
+  <span class="vr">LConfig</span><span class="op">.</span><span class="vr">Algorithm</span> <span class="op">:=</span> <span class="tp">taSHA256</span><span class="op">;</span>
+  <span class="vr">LConfig</span><span class="op">.</span><span class="vr">ToleranceSteps</span> <span class="op">:=</span> <span class="nb">2</span><span class="op">;</span>
+
+  <span class="vr">LService</span> <span class="op">:=</span> <span class="tp">TTwoFactorAuthFactory</span><span class="op">.</span><span class="fn">CreateCustom</span><span class="op">(</span><span class="vr">LConfig</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 12. GUIA: SETUP DO USUÁRIO
+                 ============================================================ -->
+            <section class="section" id="guia-setup">
+                <h2>12. Guia Prático — Setup do Usuário</h2>
+                <p>
+                    Este guia mostra o fluxo completo de <strong>cadastro do 2FA</strong> para um usuário.
+                    Ao final, o segredo estará salvo no banco e o app autenticador estará configurado.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Setup2FA.pas — Cadastro Completo</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">procedure</span> <span class="fn">TfrmSetup2FA</span><span class="op">.</span><span class="fn">btnAtivar2FAClick</span><span class="op">(</span><span class="vr">Sender</span><span class="op">:</span> <span class="tp">TObject</span><span class="op">);</span>
+<span class="kw">var</span>
+  <span class="vr">LAuthService</span><span class="op">:</span> <span class="tp">ITwoFactorAuthService</span><span class="op">;</span>
+  <span class="vr">LSecret</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LURI</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 1: Criar o serviço de autenticação</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="vr">LAuthService</span> <span class="op">:=</span> <span class="tp">TTwoFactorAuthFactory</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span>
+    <span class="st">'MinhaEmpresa'</span><span class="op">,</span>             <span class="cm">// Nome exibido no app autenticador</span>
+    <span class="vr">FUsuarioLogado</span><span class="op">.</span><span class="vr">Email</span>       <span class="cm">// E-mail ou identificador do usuário</span>
+  <span class="op">);</span>
+
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 2: Gerar o segredo criptográfico</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="vr">LSecret</span> <span class="op">:=</span> <span class="vr">LAuthService</span><span class="op">.</span><span class="fn">GenerateSecret</span><span class="op">;</span>
+
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 3: Salvar o segredo no banco (CRIPTOGRAFADO!)</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="vr">FUsuarioRepository</span><span class="op">.</span><span class="fn">SalvarSegredo2FA</span><span class="op">(</span>
+    <span class="vr">FUsuarioLogado</span><span class="op">.</span><span class="vr">ID</span><span class="op">,</span>
+    <span class="vr">FCrypto</span><span class="op">.</span><span class="fn">Encrypt</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">)</span>  <span class="cm">// ⚠️ SEMPRE criptografar antes de salvar!</span>
+  <span class="op">);</span>
+
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 4: Gerar a URI para o QR Code</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="vr">LURI</span> <span class="op">:=</span> <span class="vr">LAuthService</span><span class="op">.</span><span class="fn">GetProvisioningURI</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">);</span>
+
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 5: Exibir o QR Code para o usuário escanear</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="fn">ExibirQRCode</span><span class="op">(</span><span class="vr">imgQRCode</span><span class="op">,</span> <span class="vr">LURI</span><span class="op">);</span> <span class="cm">// Use sua lib de QR Code preferida</span>
+
+  <span class="cm">// Exibe o segredo em texto para digitação manual (fallback)</span>
+  <span class="vr">lblSecretManual</span><span class="op">.</span><span class="vr">Text</span> <span class="op">:=</span> <span class="fn">FormatarParaExibicao</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">);</span>
+  <span class="cm">// Ex: "JBSW Y3DP EHPK 3PXP" (espaços a cada 4 chars)</span>
+
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="cm">// PASSO 6: Aguardar confirmação do token</span>
+  <span class="cm">// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  <span class="vr">pnlConfirmacao</span><span class="op">.</span><span class="vr">Visible</span> <span class="op">:=</span> <span class="kw">True</span><span class="op">;</span>
+  <span class="cm">// Usuário deverá digitar o primeiro token para confirmar</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TfrmSetup2FA</span><span class="op">.</span><span class="fn">btnConfirmarTokenClick</span><span class="op">(</span><span class="vr">Sender</span><span class="op">:</span> <span class="tp">TObject</span><span class="op">);</span>
+<span class="kw">var</span>
+  <span class="vr">LResult</span><span class="op">:</span> <span class="tp">TTOTPValidationResult</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LResult</span> <span class="op">:=</span> <span class="vr">LAuthService</span><span class="op">.</span><span class="fn">ValidateToken</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">,</span> <span class="vr">edtToken</span><span class="op">.</span><span class="vr">Text</span><span class="op">);</span>
+
+  <span class="kw">if</span> <span class="vr">LResult</span><span class="op">.</span><span class="vr">IsValid</span> <span class="kw">then</span>
+  <span class="kw">begin</span>
+    <span class="vr">FUsuarioRepository</span><span class="op">.</span><span class="fn">Ativar2FA</span><span class="op">(</span><span class="vr">FUsuarioLogado</span><span class="op">.</span><span class="vr">ID</span><span class="op">);</span>
+    <span class="fn">ShowMessage</span><span class="op">(</span><span class="st">'✅ 2FA ativado com sucesso!'</span><span class="op">);</span>
+  <span class="kw">end</span>
+  <span class="kw">else</span>
+    <span class="fn">ShowMessage</span><span class="op">(</span><span class="st">'❌ Token inválido. Tente novamente.'</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+
+                <div class="alert alert-danger">
+                    <span class="alert-icon">🔴</span>
+                    <div>
+                        <strong>NUNCA</strong> armazene o segredo em texto plano no banco de dados.
+                        Sempre criptografe com AES-256 ou algoritmo equivalente antes de persistir.
+                        Um vazamento do banco com segredos em texto plano compromete todos os 2FAs.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 13. GUIA: VALIDAÇÃO DE TOKEN
+                 ============================================================ -->
+            <section class="section" id="guia-validacao">
+                <h2>13. Guia Prático — Validação de Token (Login)</h2>
+                <p>
+                    Este guia mostra como validar o token 2FA durante o processo de login,
+                    após o usuário ter fornecido suas credenciais (1º fator).
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Login2FA.pas — Validação no Login</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">procedure</span> <span class="fn">TfrmLogin</span><span class="op">.</span><span class="fn">btnValidar2FAClick</span><span class="op">(</span><span class="vr">Sender</span><span class="op">:</span> <span class="tp">TObject</span><span class="op">);</span>
+<span class="kw">var</span>
+  <span class="vr">LAuthService</span><span class="op">:</span> <span class="tp">ITwoFactorAuthService</span><span class="op">;</span>
+  <span class="vr">LSecretCriptografado</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LSecretBase32</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LTokenDigitado</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LResult</span><span class="op">:</span> <span class="tp">TTOTPValidationResult</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="cm">// 1. Recuperar o segredo criptografado do banco</span>
+  <span class="vr">LSecretCriptografado</span> <span class="op">:=</span> <span class="vr">FUsuarioRepository</span><span class="op">.</span><span class="fn">ObterSegredo2FA</span><span class="op">(</span><span class="vr">FUsuarioID</span><span class="op">);</span>
+
+  <span class="cm">// 2. Descriptografar</span>
+  <span class="vr">LSecretBase32</span> <span class="op">:=</span> <span class="vr">FCrypto</span><span class="op">.</span><span class="fn">Decrypt</span><span class="op">(</span><span class="vr">LSecretCriptografado</span><span class="op">);</span>
+
+  <span class="cm">// 3. Criar o serviço</span>
+  <span class="vr">LAuthService</span> <span class="op">:=</span> <span class="tp">TTwoFactorAuthFactory</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span>
+    <span class="st">'MinhaEmpresa'</span><span class="op">,</span>
+    <span class="vr">FUsuarioEmail</span>
+  <span class="op">);</span>
+
+  <span class="cm">// 4. Obter o token digitado pelo usuário</span>
+  <span class="vr">LTokenDigitado</span> <span class="op">:=</span> <span class="vr">edtToken</span><span class="op">.</span><span class="vr">Text</span><span class="op">.</span><span class="fn">Trim</span><span class="op">;</span>
+
+  <span class="cm">// 5. Validar</span>
+  <span class="vr">LResult</span> <span class="op">:=</span> <span class="vr">LAuthService</span><span class="op">.</span><span class="fn">ValidateToken</span><span class="op">(</span><span class="vr">LSecretBase32</span><span class="op">,</span> <span class="vr">LTokenDigitado</span><span class="op">);</span>
+
+  <span class="kw">if</span> <span class="vr">LResult</span><span class="op">.</span><span class="vr">IsValid</span> <span class="kw">then</span>
+  <span class="kw">begin</span>
+    <span class="cm">// ✅ Acesso liberado!</span>
+    <span class="fn">Log</span><span class="op">(</span><span class="st">'2FA validado com sucesso. Step: %d'</span><span class="op">,</span> <span class="op">[</span><span class="vr">LResult</span><span class="op">.</span><span class="vr">MatchedStep</span><span class="op">]);</span>
+    <span class="fn">AbrirTelaPrincipal</span><span class="op">;</span>
+  <span class="kw">end</span>
+  <span class="kw">else</span>
+  <span class="kw">begin</span>
+    <span class="cm">// ❌ Token inválido</span>
+    <span class="fn">Inc</span><span class="op">(</span><span class="vr">FTentativasInvalidas</span><span class="op">);</span>
+    <span class="fn">Log</span><span class="op">(</span><span class="st">'2FA falhou. Tentativa: %d'</span><span class="op">,</span> <span class="op">[</span><span class="vr">FTentativasInvalidas</span><span class="op">]);</span>
+
+    <span class="cm">// Bloquear após 5 tentativas</span>
+    <span class="kw">if</span> <span class="vr">FTentativasInvalidas</span> <span class="op">>=</span> <span class="nb">5</span> <span class="kw">then</span>
+    <span class="kw">begin</span>
+      <span class="vr">FUsuarioRepository</span><span class="op">.</span><span class="fn">BloquearConta</span><span class="op">(</span><span class="vr">FUsuarioID</span><span class="op">);</span>
+      <span class="fn">ShowMessage</span><span class="op">(</span><span class="st">'Conta bloqueada por excesso de tentativas.'</span><span class="op">);</span>
+    <span class="kw">end</span>
+    <span class="kw">else</span>
+      <span class="fn">ShowMessage</span><span class="op">(</span><span class="st">'Código inválido. Tente novamente.'</span><span class="op">);</span>
+  <span class="kw">end</span><span class="op">;</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 14. EXEMPLO COMPLETO
+                 ============================================================ -->
+            <section class="section" id="guia-completo">
+                <h2>14. Exemplo Completo — Integração Mínima</h2>
+                <p>
+                    Este é o exemplo mais simples e direto para testar a biblioteca. Ideal para
+                    validação inicial e entendimento do fluxo.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">TesteRapido2FA.pas — Exemplo Mínimo</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">program</span> <span class="fn">TesteRapido2FA</span><span class="op">;</span>
+
+<span class="kw">uses</span>
+  <span class="tp">System.SysUtils</span><span class="op">,</span>
+  <span class="tp">Auth2FA.Interfaces</span><span class="op">,</span>
+  <span class="tp">Auth2FA.Factory</span><span class="op">;</span>
+
+<span class="kw">var</span>
+  <span class="vr">LService</span><span class="op">:</span> <span class="tp">ITwoFactorAuthService</span><span class="op">;</span>
+  <span class="vr">LSecret</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LToken</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LResult</span><span class="op">:</span> <span class="tp">TTOTPValidationResult</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="cm">// 1. Criar serviço</span>
+  <span class="vr">LService</span> <span class="op">:=</span> <span class="tp">TTwoFactorAuthFactory</span><span class="op">.</span><span class="fn">CreateDefault</span><span class="op">(</span>
+    <span class="st">'MeuApp'</span><span class="op">,</span>
+    <span class="st">'rodrigo@teste.com.br'</span>
+  <span class="op">);</span>
+
+  <span class="cm">// 2. Gerar segredo</span>
+  <span class="vr">LSecret</span> <span class="op">:=</span> <span class="vr">LService</span><span class="op">.</span><span class="fn">GenerateSecret</span><span class="op">;</span>
+  <span class="fn">WriteLn</span><span class="op">(</span><span class="st">'Segredo: '</span><span class="op">,</span> <span class="vr">LSecret</span><span class="op">);</span>
+
+  <span class="cm">// 3. URI para QR Code</span>
+  <span class="fn">WriteLn</span><span class="op">(</span><span class="st">'URI:     '</span><span class="op">,</span> <span class="vr">LService</span><span class="op">.</span><span class="fn">GetProvisioningURI</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">));</span>
+
+  <span class="cm">// 4. Token atual (para debug)</span>
+  <span class="vr">LToken</span> <span class="op">:=</span> <span class="vr">LService</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">);</span>
+  <span class="fn">WriteLn</span><span class="op">(</span><span class="st">'Token:   '</span><span class="op">,</span> <span class="vr">LToken</span><span class="op">);</span>
+  <span class="fn">WriteLn</span><span class="op">(</span><span class="st">'Expira:  '</span><span class="op">,</span> <span class="vr">LService</span><span class="op">.</span><span class="fn">GetRemainingSeconds</span><span class="op">,</span> <span class="st">'s'</span><span class="op">);</span>
+
+  <span class="cm">// 5. Validar (auto-teste)</span>
+  <span class="vr">LResult</span> <span class="op">:=</span> <span class="vr">LService</span><span class="op">.</span><span class="fn">ValidateToken</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">,</span> <span class="vr">LToken</span><span class="op">);</span>
+  <span class="fn">WriteLn</span><span class="op">(</span><span class="st">'Válido:  '</span><span class="op">,</span> <span class="fn">BoolToStr</span><span class="op">(</span><span class="vr">LResult</span><span class="op">.</span><span class="vr">IsValid</span><span class="op">,</span> <span class="kw">True</span><span class="op">));</span>
+
+  <span class="fn">ReadLn</span><span class="op">;</span>
+<span class="kw">end.</span></code></pre>
+                </div>
+
+                <div class="card" style="background: #f0fdf4; border-color: #86efac;">
+                    <h4 style="color: #059669;">📋 Saída Esperada</h4>
+                    <div class="code-block" style="margin-bottom: 0;">
+                        <pre><code>Segredo: GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+URI:     otpauth://totp/MeuApp:rodrigo%40teste.com.br?secret=GEZDGNBVGY3TQOJQ...&issuer=MeuApp&algorithm=SHA1&digits=6&period=30
+Token:   482913
+Expira:  17s
+Válido:  True</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 15. SEGURANÇA
+                 ============================================================ -->
+            <section class="section" id="seguranca">
+                <h2>15. Considerações de Segurança</h2>
+
+                <h3>15.1 Armazenamento do Segredo</h3>
+                <div class="alert alert-danger">
+                    <span class="alert-icon">🛑</span>
+                    <div>
+                        <strong>Regra de Ouro:</strong> O segredo é equivalente a uma senha. Trate-o com
+                        o mesmo (ou maior) nível de proteção.
+                    </div>
+                </div>
+
+                <ul class="checklist">
+                    <li><strong>Criptografe</strong> o segredo antes de salvar no banco (AES-256-GCM recomendado)</li>
+                    <li><strong>Nunca</strong> exponha o segredo em logs, respostas de API ou mensagens de erro</li>
+                    <li><strong>Limpe a memória</strong> após uso com <code>FillChar(Buffer, Length, 0)</code></li>
+                    <li>Considere usar <strong>HSM</strong> (Hardware Security Module) para a chave de criptografia</li>
+                </ul>
+
+                <h3>15.2 Proteção contra Brute Force</h3>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Proteção Anti-Brute-Force</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">const</span>
+  <span class="vr">MAX_TENTATIVAS</span> <span class="op">=</span> <span class="nb">5</span><span class="op">;</span>          <span class="cm">// Máximo de tentativas</span>
+  <span class="vr">BLOQUEIO_MINUTOS</span> <span class="op">=</span> <span class="nb">15</span><span class="op">;</span>        <span class="cm">// Tempo de bloqueio</span>
+  <span class="vr">BACKOFF_BASE_MS</span> <span class="op">=</span> <span class="nb">1000</span><span class="op">;</span>       <span class="cm">// Delay progressivo base</span>
+
+<span class="kw">procedure</span> <span class="fn">ValidarComProtecao</span><span class="op">(</span>
+  <span class="kw">const</span> <span class="vr">AService</span><span class="op">:</span> <span class="tp">ITwoFactorAuthService</span><span class="op">;</span>
+  <span class="kw">const</span> <span class="vr">ASecret</span><span class="op">,</span> <span class="vr">AToken</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="kw">var</span> <span class="vr">ATentativas</span><span class="op">:</span> <span class="tp">Integer</span><span class="op">);</span>
+<span class="kw">begin</span>
+  <span class="cm">// Verifica se está bloqueado</span>
+  <span class="kw">if</span> <span class="vr">ATentativas</span> <span class="op">>=</span> <span class="vr">MAX_TENTATIVAS</span> <span class="kw">then</span>
+    <span class="kw">raise</span> <span class="tp">EAuthException</span><span class="op">.</span><span class="fn">Create</span><span class="op">(</span><span class="st">'Conta bloqueada temporariamente'</span><span class="op">);</span>
+
+  <span class="cm">// Delay progressivo (exponential backoff)</span>
+  <span class="kw">if</span> <span class="vr">ATentativas</span> <span class="op">&gt;</span> <span class="nb">0</span> <span class="kw">then</span>
+    <span class="fn">Sleep</span><span class="op">(</span><span class="vr">BACKOFF_BASE_MS</span> <span class="op">*</span> <span class="fn">Trunc</span><span class="op">(</span><span class="fn">Power</span><span class="op">(</span><span class="nb">2</span><span class="op">,</span> <span class="vr">ATentativas</span> <span class="op">-</span> <span class="nb">1</span><span class="op">)));</span>
+
+  <span class="kw">if not</span> <span class="vr">AService</span><span class="op">.</span><span class="fn">ValidateToken</span><span class="op">(</span><span class="vr">ASecret</span><span class="op">,</span> <span class="vr">AToken</span><span class="op">).</span><span class="vr">IsValid</span> <span class="kw">then</span>
+  <span class="kw">begin</span>
+    <span class="fn">Inc</span><span class="op">(</span><span class="vr">ATentativas</span><span class="op">);</span>
+    <span class="kw">raise</span> <span class="tp">EAuthException</span><span class="op">.</span><span class="fn">CreateFmt</span><span class="op">(</span>
+      <span class="st">'Token inválido. Tentativa %d de %d'</span><span class="op">,</span>
+      <span class="op">[</span><span class="vr">ATentativas</span><span class="op">,</span> <span class="vr">MAX_TENTATIVAS</span><span class="op">]</span>
+    <span class="op">);</span>
+  <span class="kw">end</span><span class="op">;</span>
+
+  <span class="cm">// Reset em caso de sucesso</span>
+  <span class="vr">ATentativas</span> <span class="op">:=</span> <span class="nb">0</span><span class="op">;</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+
+                <h3>15.3 Prevenção de Token Replay</h3>
+                <div class="card">
+                    <p>
+                        Para evitar que o mesmo token seja usado duas vezes dentro da mesma janela de 30 segundos,
+                        armazene o <strong>último counter utilizado</strong> por usuário:
+                    </p>
+                    <div class="code-block" style="margin-bottom: 0;">
+                        <div class="code-block-header">
+                            <span class="file-name">Anti-Replay</span>
+                            <span class="lang-tag">SQL</span>
+                        </div>
+                        <pre><code><span class="kw">ALTER TABLE</span> <span class="vr">usuarios</span> <span class="kw">ADD</span> <span class="vr">ultimo_counter_2fa</span> <span class="tp">BIGINT</span> <span class="kw">DEFAULT</span> <span class="nb">0</span><span class="op">;</span>
+
+<span class="cm">-- Antes de validar, verificar:</span>
+<span class="cm">-- IF counter_atual <= ultimo_counter_2fa THEN rejeitar</span>
+<span class="cm">-- ELSE validar e atualizar ultimo_counter_2fa</span></code></pre>
+                    </div>
+                </div>
+
+                <h3>15.4 Códigos de Recuperação (Backup Codes)</h3>
+                <p>
+                    Gere códigos de uso único para o caso do usuário perder acesso ao app autenticador:
+                </p>
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Geração de Backup Codes</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">function</span> <span class="fn">GerarBackupCodes</span><span class="op">(</span><span class="kw">const</span> <span class="vr">AQuantidade</span><span class="op">:</span> <span class="tp">Integer</span> <span class="op">=</span> <span class="nb">10</span><span class="op">):</span> <span class="tp">TArray&lt;string&gt;</span><span class="op">;</span>
+<span class="kw">var</span>
+  <span class="vr">I</span><span class="op">:</span> <span class="tp">Integer</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="fn">SetLength</span><span class="op">(</span><span class="vr">Result</span><span class="op">,</span> <span class="vr">AQuantidade</span><span class="op">);</span>
+  <span class="fn">Randomize</span><span class="op">;</span>
+
+  <span class="kw">for</span> <span class="vr">I</span> <span class="op">:=</span> <span class="nb">0</span> <span class="kw">to</span> <span class="vr">AQuantidade</span> <span class="op">-</span> <span class="nb">1</span> <span class="kw">do</span>
+    <span class="vr">Result</span><span class="op">[</span><span class="vr">I</span><span class="op">]</span> <span class="op">:=</span> <span class="fn">Format</span><span class="op">(</span><span class="st">'%s-%s'</span><span class="op">,</span> <span class="op">[</span>
+      <span class="fn">Format</span><span class="op">(</span><span class="st">'%.4d'</span><span class="op">,</span> <span class="op">[</span><span class="fn">Random</span><span class="op">(</span><span class="nb">10000</span><span class="op">)]),</span>
+      <span class="fn">Format</span><span class="op">(</span><span class="st">'%.4d'</span><span class="op">,</span> <span class="op">[</span><span class="fn">Random</span><span class="op">(</span><span class="nb">10000</span><span class="op">)])</span>
+    <span class="op">]);</span>
+
+  <span class="cm">// Resultado: ['2847-0193', '6281-4520', ...]</span>
+  <span class="cm">// Salvar HASH dos códigos no banco (nunca texto plano)</span>
+<span class="kw">end</span><span class="op">;</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 16. TESTES
+                 ============================================================ -->
+            <section class="section" id="testes">
+                <h2>16. Testes</h2>
+                <p>
+                    Utilize os <strong>vetores de teste da RFC 6238</strong> para validar a implementação.
+                    Abaixo, um exemplo com DUnit/DUnitX:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-header">
+                        <span class="file-name">Auth2FA.Tests.pas — Vetores RFC 6238</span>
+                        <span class="lang-tag">Delphi</span>
+                    </div>
+                    <pre><code><span class="kw">unit</span> <span class="fn">Auth2FA.Tests</span><span class="op">;</span>
+
+<span class="kw">interface</span>
+
+<span class="kw">uses</span>
+  <span class="tp">DUnitX.TestFramework</span><span class="op">,</span>
+  <span class="tp">Auth2FA.Interfaces</span><span class="op">,</span>
+  <span class="tp">Auth2FA.Base32Codec</span><span class="op">,</span>
+  <span class="tp">Auth2FA.HMAC.Strategy</span><span class="op">,</span>
+  <span class="tp">Auth2FA.TOTP.Engine</span><span class="op">;</span>
+
+<span class="kw">type</span>
+  <span class="op">[</span><span class="at">TestFixture</span><span class="op">]</span>
+  <span class="tp">TTOTPEngineTest</span> <span class="op">=</span> <span class="kw">class</span>
+  <span class="kw">private</span>
+    <span class="vr">FEngine</span><span class="op">:</span> <span class="tp">TTOTPEngine</span><span class="op">;</span>
+    <span class="vr">FBase32</span><span class="op">:</span> <span class="tp">IBase32Codec</span><span class="op">;</span>
+    <span class="vr">FHMAC</span><span class="op">:</span> <span class="tp">IHMACStrategy</span><span class="op">;</span>
+  <span class="kw">public</span>
+    <span class="op">[</span><span class="at">Setup</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">Setup</span><span class="op">;</span>
+
+    <span class="op">[</span><span class="at">TearDown</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">TearDown</span><span class="op">;</span>
+
+    <span class="op">[</span><span class="at">Test</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">TestRFC6238_SHA1_KnownVector</span><span class="op">;</span>
+
+    <span class="op">[</span><span class="at">Test</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">TestTokenHas6Digits</span><span class="op">;</span>
+
+    <span class="op">[</span><span class="at">Test</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">TestSameSecretSameTimeSameToken</span><span class="op">;</span>
+
+    <span class="op">[</span><span class="at">Test</span><span class="op">]</span>
+    <span class="kw">procedure</span> <span class="fn">TestDifferentTimesDifferentTokens</span><span class="op">;</span>
+  <span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">implementation</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">Setup</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">FBase32</span> <span class="op">:=</span> <span class="tp">TBase32Codec</span><span class="op">.</span><span class="fn">Create</span><span class="op">;</span>
+  <span class="vr">FHMAC</span> <span class="op">:=</span> <span class="tp">THMACSHA1Strategy</span><span class="op">.</span><span class="fn">Create</span><span class="op">;</span>
+  <span class="vr">FEngine</span> <span class="op">:=</span> <span class="tp">TTOTPEngine</span><span class="op">.</span><span class="fn">Create</span><span class="op">(</span><span class="vr">FHMAC</span><span class="op">,</span> <span class="vr">FBase32</span><span class="op">,</span> <span class="nb">6</span><span class="op">,</span> <span class="nb">30</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">TearDown</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">FEngine</span><span class="op">.</span><span class="fn">Free</span><span class="op">;</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">TestRFC6238_SHA1_KnownVector</span><span class="op">;</span>
+<span class="kw">var</span>
+  <span class="vr">LSecret</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+  <span class="vr">LToken</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="cm">// Segredo ASCII "12345678901234567890" em Base32</span>
+  <span class="vr">LSecret</span> <span class="op">:=</span> <span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">;</span>
+
+  <span class="cm">// RFC 6238 - Tempo: 59 segundos (1970-01-01 00:00:59 UTC)</span>
+  <span class="vr">LToken</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="vr">LSecret</span><span class="op">,</span> <span class="nb">59</span><span class="op">);</span>
+  <span class="fn">Assert</span><span class="op">.</span><span class="fn">AreEqual</span><span class="op">(</span><span class="st">'287082'</span><span class="op">,</span> <span class="vr">LToken</span><span class="op">,</span> <span class="st">'RFC 6238 vetor T=59s'</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">TestTokenHas6Digits</span><span class="op">;</span>
+<span class="kw">var</span>
+  <span class="vr">LToken</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LToken</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">,</span> <span class="nb">1234567890</span><span class="op">);</span>
+  <span class="fn">Assert</span><span class="op">.</span><span class="fn">AreEqual</span><span class="op">(</span><span class="nb">6</span><span class="op">,</span> <span class="fn">Length</span><span class="op">(</span><span class="vr">LToken</span><span class="op">),</span> <span class="st">'Token deve ter exatamente 6 dígitos'</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">TestSameSecretSameTimeSameToken</span><span class="op">;</span>
+<span class="kw">var</span>
+  <span class="vr">LToken1</span><span class="op">,</span> <span class="vr">LToken2</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LToken1</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">,</span> <span class="nb">59</span><span class="op">);</span>
+  <span class="vr">LToken2</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">,</span> <span class="nb">59</span><span class="op">);</span>
+  <span class="fn">Assert</span><span class="op">.</span><span class="fn">AreEqual</span><span class="op">(</span><span class="vr">LToken1</span><span class="op">,</span> <span class="vr">LToken2</span><span class="op">,</span> <span class="st">'Mesmo segredo + mesmo tempo = mesmo token'</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">procedure</span> <span class="fn">TTOTPEngineTest</span><span class="op">.</span><span class="fn">TestDifferentTimesDifferentTokens</span><span class="op">;</span>
+<span class="kw">var</span>
+  <span class="vr">LToken1</span><span class="op">,</span> <span class="vr">LToken2</span><span class="op">:</span> <span class="tp">string</span><span class="op">;</span>
+<span class="kw">begin</span>
+  <span class="vr">LToken1</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">,</span> <span class="nb">59</span><span class="op">);</span>
+  <span class="vr">LToken2</span> <span class="op">:=</span> <span class="vr">FEngine</span><span class="op">.</span><span class="fn">GenerateToken</span><span class="op">(</span><span class="st">'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'</span><span class="op">,</span> <span class="nb">1234567890</span><span class="op">);</span>
+  <span class="fn">Assert</span><span class="op">.</span><span class="fn">AreNotEqual</span><span class="op">(</span><span class="vr">LToken1</span><span class="op">,</span> <span class="vr">LToken2</span><span class="op">,</span> <span class="st">'Tempos diferentes devem gerar tokens diferentes'</span><span class="op">);</span>
+<span class="kw">end</span><span class="op">;</span>
+
+<span class="kw">end.</span></code></pre>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 17. TROUBLESHOOTING
+                 ============================================================ -->
+            <section class="section" id="troubleshooting">
+                <h2>17. Troubleshooting</h2>
+
+                <h3>Problemas Comuns e Soluções</h3>
+
+                <div class="card" style="border-left: 4px solid #dc2626;">
+                    <h4>❌ Token sempre inválido</h4>
+                    <p><strong>Causa mais comum:</strong> Relógio do servidor dessincronizado com UTC.</p>
+                    <p><strong>Solução:</strong></p>
+                    <ul>
+                        <li>Verifique se o servidor está sincronizado com NTP</li>
+                        <li>Execute: <code>w32tm /resync</code> (Windows)</li>
+                        <li>Aumente <code>ToleranceSteps</code> para 2 (±60s) temporariamente</li>
+                        <li>Confirme que está usando UTC, não hora local</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #d97706;">
+                    <h4>⚠️ Token funciona no teste mas não no Google Authenticator</h4>
+                    <p><strong>Causa:</strong> Parâmetros incompatíveis com o Google Authenticator.</p>
+                    <p><strong>Solução:</strong></p>
+                    <ul>
+                        <li>Use <code>Period = 30</code> (Google Authenticator ignora outros valores)</li>
+                        <li>Use <code>Algorithm = SHA1</code> (mais compatível)</li>
+                        <li>Use <code>Digits = 6</code></li>
+                        <li>Verifique se o segredo Base32 não tem espaços ou caracteres inválidos</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #2563eb;">
+                    <h4>ℹ️ QR Code não é reconhecido pelo app</h4>
+                    <p><strong>Causa:</strong> URI mal formatada ou QR Code com baixa resolução.</p>
+                    <p><strong>Solução:</strong></p>
+                    <ul>
+                        <li>Verifique se a URI começa com <code>otpauth://totp/</code></li>
+                        <li>Certifique-se de que caracteres especiais estão URL-encoded (ex: <code>@</code> → <code>%40</code>)</li>
+                        <li>Gere o QR Code com tamanho mínimo de 200x200 pixels</li>
+                        <li>Teste a URI manualmente em <a href="https://totp.danhersam.com/" target="_blank">totp.danhersam.com</a></li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #059669;">
+                    <h4>✅ Como testar sem celular</h4>
+                    <p><strong>Ferramentas de teste:</strong></p>
+                    <ul>
+                        <li>Use <code>GenerateToken</code> do próprio serviço para obter o token esperado</li>
+                        <li>Extensão de navegador: <strong>Authenticator</strong> (Chrome/Firefox)</li>
+                        <li>Validadores online: <a href="https://totp.danhersam.com/" target="_blank">totp.danhersam.com</a></li>
+                        <li>App desktop: <strong>WinAuth</strong> ou <strong>KeePassXC</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 FOOTER
+                 ============================================================ -->
+            <footer class="footer">
+                <p>
+                    <strong>Auth2FA para Delphi 12 Athens</strong> — Documentação v1.0.0
+                    <br>
+                    Implementação conforme RFC 6238 (TOTP) e RFC 4226 (HOTP)
+                    <br>
+                    Projeto: Infraestrutura de Projetos &bull; Goiânia, GO — Brasil
+                    <br>
+                    Gerado em Abril de 2026
+                </p>
+            </footer>
+
+        </div>
+    </main>
+
+    <!-- ============================================================
+         SCRIPTS
+         ============================================================ -->
+    <script>
+        // Toggle sidebar (mobile)
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Close sidebar when clicking outside (mobile)
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.menu-toggle');
+            if (window.innerWidth <= 1024 &&
+                !sidebar.contains(e.target) &&
+                !toggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Scroll spy - highlight active sidebar link
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section[id]');
+            const links = document.querySelectorAll('.sidebar-link');
+
+            function updateActiveLink() {
+                let currentSection = '';
+                const scrollPos = window.scrollY + 100;
+
+                sections.forEach(function(section) {
+                    if (section.offsetTop <= scrollPos) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+
+                links.forEach(function(link) {
+                    link.classList.remove('current');
+                    const href = link.getAttribute('href');
+                    if (href && href.substring(1) === currentSection) {
+                        link.classList.add('current');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink();
+        });
+
+        // Close sidebar on link click (mobile)
+        document.querySelectorAll('.sidebar-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

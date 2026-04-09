@@ -1,0 +1,71 @@
+program HorseCacheDemo;
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils,
+  Horse,
+  Cache.Config,
+  Cache.Factory,
+  Cache.Middleware.Horse;
+
+begin
+  // 1. Configurar e inicializar o cache
+  var LConfig := TCacheConfig.Create;
+  LConfig.Host := '127.0.0.1';
+  LConfig.Port := 6379;
+  LConfig.DefaultTTLSeconds := 120;
+  LConfig.KeyPrefix := 'api:cache:';
+  TCacheFactory.Initialize(LConfig);
+  LConfig.Free;
+
+  // 2. Registrar o middleware no Horse
+  THorse.Use(TCacheMiddleware.New(TCacheFactory.Manager, 120));
+
+  // 3. Rotas
+  THorse.Get('/health',
+    procedure(AReq: THorseRequest; ARes: THorseResponse)
+    begin
+      ARes.Send('{"status":"ok"}').ContentType('application/json');
+    end
+  );
+
+  THorse.Get('/produtos',
+    procedure(AReq: THorseRequest; ARes: THorseResponse)
+    begin
+      // Simulação de query pesada
+      Sleep(500);
+      ARes.Send('[{"id":1,"nome":"Produto A"},{"id":2,"nome":"Produto B"}]')
+          .ContentType('application/json');
+    end
+  );
+
+  THorse.Get('/cache/stats',
+    procedure(AReq: THorseRequest; ARes: THorseResponse)
+    var
+      LJson: TJSONObject;
+    begin
+      LJson := TCacheFactory.Monitor.GetStatsJSON;
+      try
+        ARes.Send(LJson.ToJSON).ContentType('application/json');
+      finally
+        LJson.Free;
+      end;
+    end
+  );
+
+  // 4. Iniciar monitoramento
+  TCacheFactory.Monitor.StartCollecting(5000);
+
+  // 5. Subir o servidor
+  THorse.Listen(9000,
+    procedure
+    begin
+      Writeln('Servidor Horse rodando na porta 9000');
+      Writeln('Endpoints:');
+      Writeln('  GET /health       - Health check');
+      Writeln('  GET /produtos     - Lista de produtos (com cache)');
+      Writeln('  GET /cache/stats  - Estatísticas do cache');
+    end
+  );
+end.
