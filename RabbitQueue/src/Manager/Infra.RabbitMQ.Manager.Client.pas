@@ -1,4 +1,4 @@
-unit RabbitMQ.Management.Client;
+﻿unit Infra.RabbitMQ.Manager.Client;
 
 interface
 
@@ -10,7 +10,7 @@ uses
   System.Net.URLClient,
   System.NetEncoding,
   System.Generics.Collections,
-  RabbitMQ.Management.Types;
+  Infra.RabbitMQ.Manager.Types;
 
 type
   /// <summary>

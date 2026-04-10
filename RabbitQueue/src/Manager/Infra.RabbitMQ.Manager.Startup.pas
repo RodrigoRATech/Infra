@@ -1,4 +1,4 @@
-unit RabbitMQ.Management.Startup;
+﻿unit Infra.RabbitMQ.Manager.Startup;
 
 interface
 
@@ -6,8 +6,8 @@ uses
   System.SysUtils,
   System.Diagnostics,
   System.Generics.Collections,
-  RabbitMQ.Management.Types,
-  RabbitMQ.Management.Service;
+  Infra.RabbitMQ.Manager.Types,
+  Infra.RabbitMQ.Manager.Service;
 
 type
   /// <summary>

@@ -1,4 +1,4 @@
-unit RabbitMQ.Management.Types;
+﻿unit Infra.RabbitMQ.Manager.Types;
 
 interface
 
@@ -101,7 +101,7 @@ type
 implementation
 
 uses
-  System.Net.URLClient;
+  System.Net.URLClient, System.NetEncoding;
 
 { TRabbitQueueInfo }
 

@@ -1,4 +1,4 @@
-unit RabbitMQ.Management.Service;
+﻿unit Infra.RabbitMQ.Manager.Service;
 
 interface
 
@@ -7,8 +7,8 @@ uses
   System.JSON,
   System.Diagnostics,
   System.Generics.Collections,
-  RabbitMQ.Management.Types,
-  RabbitMQ.Management.Client;
+  Infra.RabbitMQ.Manager.Types,
+  Infra.RabbitMQ.Manager.Client;
 
 type
   /// <summary>
