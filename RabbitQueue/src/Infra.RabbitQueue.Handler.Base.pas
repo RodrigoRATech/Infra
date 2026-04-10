@@ -1,10 +1,10 @@
-unit RabbitQueue.Handler.Base;
+﻿unit Infra.RabbitQueue.Handler.Base;
 
 interface
 
 uses
-  RabbitQueue.Interfaces,
-  RabbitQueue.Types,
+  Infra.RabbitQueue.Interfaces,
+  Infra.RabbitQueue.Types,
   System.SysUtils;
 
 type

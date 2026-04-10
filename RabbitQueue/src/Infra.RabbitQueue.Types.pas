@@ -1,4 +1,4 @@
-unit RabbitQueue.Types;
+﻿unit Infra.RabbitQueue.Types;
 
 interface
 

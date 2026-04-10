@@ -1,12 +1,12 @@
-﻿unit RabbitQueue.Core;
+﻿unit Infra.RabbitQueue.Core;
 
 interface
 
 uses
-  RabbitQueue.Interfaces,
-  RabbitQueue.Types,
-  RabbitQueue.Connection,
-  RabbitQueue.Worker,
+  Infra.RabbitQueue.Interfaces,
+  Infra.RabbitQueue.Types,
+  Infra.RabbitQueue.Connection,
+  Infra.RabbitQueue.Worker,
   System.SysUtils,
   System.SyncObjs,
   System.Generics.Collections;

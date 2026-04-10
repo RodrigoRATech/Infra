@@ -1,12 +1,12 @@
-unit RabbitQueue.Factory;
+﻿unit Infra.RabbitQueue.Factory;
 
 interface
 
 uses
-  RabbitQueue.Interfaces,
-  RabbitQueue.Types,
-  RabbitQueue.Core,
-  RabbitQueue.Handler.Base,
+  Infra.RabbitQueue.Interfaces,
+  Infra.RabbitQueue.Types,
+  Infra.RabbitQueue.Core,
+  Infra.RabbitQueue.Handler.Base,
   System.SysUtils;
 
 type

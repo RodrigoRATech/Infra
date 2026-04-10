@@ -1,10 +1,10 @@
-﻿unit RabbitQueue.Connection;
+﻿unit Infra.RabbitQueue.Connection;
 
 interface
 
 uses
-  RabbitQueue.Interfaces,
-  RabbitQueue.Types,
+  Infra.RabbitQueue.Interfaces,
+  Infra.RabbitQueue.Types,
   StompClient,        // danieleteti/delphistompclient — única unit necessária
   System.SysUtils,
   System.SyncObjs,

@@ -1,9 +1,9 @@
-unit RabbitQueue.Interfaces;
+﻿unit Infra.RabbitQueue.Interfaces;
 
 interface
 
 uses
-  RabbitQueue.Types,
+  Infra.RabbitQueue.Types,
   System.SysUtils,
   System.Generics.Collections;
 

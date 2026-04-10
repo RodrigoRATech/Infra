@@ -1,4 +1,4 @@
-unit RabbitQueue.Worker;
+﻿unit Infra.RabbitQueue.Worker;
 
 {
   AUDITORIA: Corrigido deadlock em Start()
@@ -11,8 +11,8 @@ unit RabbitQueue.Worker;
 interface
 
 uses
-  RabbitQueue.Interfaces,
-  RabbitQueue.Types,
+  Infra.RabbitQueue.Interfaces,
+  Infra.RabbitQueue.Types,
   System.Classes,
   System.SysUtils,
   System.SyncObjs,
