@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RabbitQueue — Documentação Técnica</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0f1117;
+      --bg-card:      #1a1d27;
+      --bg-card2:     #1e2130;
+      --bg-code:      #12141e;
+      --border:       #2a2d3e;
+      --accent:       #f97316;
+      --accent2:      #fb923c;
+      --accent-glow:  rgba(249,115,22,0.15);
+      --blue:         #60a5fa;
+      --green:        #4ade80;
+      --yellow:       #facc15;
+      --red:          #f87171;
+      --purple:       #c084fc;
+      --cyan:         #22d3ee;
+      --text:         #e2e8f0;
+      --text-muted:   #64748b;
+      --text-soft:    #94a3b8;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --shadow:       0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo .logo-icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-logo h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-logo p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .sidebar-version {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar nav { padding: 12px 0; flex: 1; }
+
+    .nav-section {
+      padding: 8px 20px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border-left-color: var(--accent);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      background: var(--accent-glow);
+      border-left-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-item .nav-icon { font-size: 14px; opacity: 0.8; }
+
+    /* ── Main Content ─────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 48px 56px;
+      max-width: 980px;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #1e1628 50%, #121827 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '🐇';
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 100px;
+      opacity: 0.08;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-soft);
+      font-size: 15px;
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .tag {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────── */
+    section { margin-bottom: 56px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .section-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--text);
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 28px 0 12px;
+    }
+
+    p { color: var(--text-soft); margin-bottom: 14px; }
+
+    /* ── Cards ────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s ease;
+    }
+
+    .card:hover { border-color: rgba(249,115,22,0.3); }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .card-icon.orange  { background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3); }
+    .card-icon.blue    { background: rgba(96,165,250,0.12);  border: 1px solid rgba(96,165,250,0.3); }
+    .card-icon.green   { background: rgba(74,222,128,0.12);  border: 1px solid rgba(74,222,128,0.3); }
+    .card-icon.purple  { background: rgba(192,132,252,0.12); border: 1px solid rgba(192,132,252,0.3); }
+    .card-icon.cyan    { background: rgba(34,211,238,0.12);  border: 1px solid rgba(34,211,238,0.3); }
+    .card-icon.yellow  { background: rgba(250,204,21,0.12);  border: 1px solid rgba(250,204,21,0.3); }
+    .card-icon.red     { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); }
+
+    .card-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .card-unit  { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'Consolas', monospace; }
+    .card p     { font-size: 13.5px; margin-bottom: 0; color: var(--text-soft); }
+
+    /* ── Grid ─────────────────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── Code Blocks ──────────────────────────────────────────── */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 16px 0;
+      box-shadow: var(--shadow);
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-lang {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .code-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .code-body {
+      padding: 20px 20px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      tab-size: 2;
+    }
+
+    /* Syntax highlight */
+    .kw   { color: #c084fc; font-weight: 600; }  /* keyword */
+    .tp   { color: #60a5fa; }                    /* type */
+    .cm   { color: #4b5563; font-style: italic; }/* comment */
+    .st   { color: #4ade80; }                    /* string */
+    .nm   { color: #fb923c; }                    /* number/const */
+    .fn   { color: #e2e8f0; }                    /* function/proc name */
+    .op   { color: #94a3b8; }                    /* operator / punctuation */
+    .rx   { color: #f87171; }                    /* special */
+
+    /* ── Method Table ─────────────────────────────────────────── */
+    .method-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .method-table th {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .method-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+      color: var(--text-soft);
+    }
+
+    .method-table tr:last-child td { border-bottom: none; }
+    .method-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .method-table code {
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--blue);
+      background: rgba(96,165,250,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-green  { background: rgba(74,222,128,0.12);  color: var(--green);  border: 1px solid rgba(74,222,128,0.3); }
+    .badge-blue   { background: rgba(96,165,250,0.12);  color: var(--blue);   border: 1px solid rgba(96,165,250,0.3); }
+    .badge-orange { background: rgba(249,115,22,0.12);  color: var(--accent); border: 1px solid rgba(249,115,22,0.3); }
+    .badge-purple { background: rgba(192,132,252,0.12); color: var(--purple); border: 1px solid rgba(192,132,252,0.3); }
+    .badge-red    { background: rgba(248,113,113,0.12); color: var(--red);    border: 1px solid rgba(248,113,113,0.3); }
+    .badge-yellow { background: rgba(250,204,21,0.12);  color: var(--yellow); border: 1px solid rgba(250,204,21,0.3); }
+
+    /* ── Callouts ─────────────────────────────────────────────── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: var(--radius-sm);
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout p    { margin: 0; }
+
+    .callout.info    { background: rgba(96,165,250,0.08);  border: 1px solid rgba(96,165,250,0.25);  color: #93c5fd; }
+    .callout.warn    { background: rgba(250,204,21,0.08);  border: 1px solid rgba(250,204,21,0.25);  color: #fde047; }
+    .callout.danger  { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; }
+    .callout.success { background: rgba(74,222,128,0.08);  border: 1px solid rgba(74,222,128,0.25);  color: #86efac; }
+
+    /* ── Pattern Pill ─────────────────────────────────────────── */
+    .patterns { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+
+    .pattern-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .pattern-pill span { color: var(--accent); font-weight: 700; }
+
+    /* ── Architecture Diagram ─────────────────────────────────── */
+    .arch-diagram {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      font-family: 'Consolas', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text-soft);
+      overflow-x: auto;
+    }
+
+    .arch-diagram .ah  { color: var(--accent); font-weight: 700; }
+    .arch-diagram .ab  { color: var(--blue); }
+    .arch-diagram .ag  { color: var(--green); }
+    .arch-diagram .ap  { color: var(--purple); }
+    .arch-diagram .ay  { color: var(--yellow); }
+
+    /* ── Audit Table ──────────────────────────────────────────── */
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 16px 0;
+    }
+
+    .audit-table th {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .audit-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+      color: var(--text-soft);
+    }
+
+    .audit-table code {
+      font-family: 'Consolas', monospace;
+      font-size: 11.5px;
+      color: var(--red);
+      background: rgba(248,113,113,0.08);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .audit-table .fixed {
+      color: var(--green);
+      background: rgba(74,222,128,0.08);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      font-size: 11.5px;
+    }
+
+    /* ── File Tree ────────────────────────────────────────────── */
+    .file-tree {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.9;
+    }
+
+    .file-tree .dir  { color: var(--accent); font-weight: 700; }
+    .file-tree .file { color: var(--text-soft); }
+    .file-tree .note { color: var(--text-muted); font-style: italic; font-size: 12px; }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { padding: 32px 24px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      footer { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">🐇</span>
+      <h1>RabbitQueue</h1>
+      <p>Delphi 12 · RabbitMQ · STOMP</p>
+      <span class="sidebar-version">v1.0 — Final</span>
+    </div>
+
+    <nav>
+      <div class="nav-section">Início</div>
+      <a href="#visao-geral"   class="nav-item"><span class="nav-icon">🏠</span> Visão Geral</a>
+      <a href="#estrutura"     class="nav-item"><span class="nav-icon">📁</span> Estrutura de Arquivos</a>
+      <a href="#arquitetura"   class="nav-item"><span class="nav-icon">🏗️</span> Arquitetura</a>
+      <a href="#padroes"       class="nav-item"><span class="nav-icon">♟️</span> Padrões de Projeto</a>
+
+      <div class="nav-section">Unidades</div>
+      <a href="#types"         class="nav-item"><span class="nav-icon">🔷</span> RabbitQueue.Types</a>
+      <a href="#interfaces"    class="nav-item"><span class="nav-icon">🔌</span> RabbitQueue.Interfaces</a>
+      <a href="#handler"       class="nav-item"><span class="nav-icon">⚙️</span> RabbitQueue.Handler</a>
+      <a href="#connection"    class="nav-item"><span class="nav-icon">🔗</span> RabbitQueue.Connection</a>
+      <a href="#worker"        class="nav-item"><span class="nav-icon">🧵</span> RabbitQueue.Worker</a>
+      <a href="#core"          class="nav-item"><span class="nav-icon">🎯</span> RabbitQueue.Core</a>
+      <a href="#factory"       class="nav-item"><span class="nav-icon">🏭</span> RabbitQueue.Factory</a>
+
+      <div class="nav-section">Exemplos</div>
+      <a href="#ex-basico"     class="nav-item"><span class="nav-icon">▶️</span> Uso Básico</a>
+      <a href="#ex-handler"    class="nav-item"><span class="nav-icon">🧩</span> Handler Concreto</a>
+      <a href="#ex-anonimo"    class="nav-item"><span class="nav-icon">λ</span> Handler Anônimo</a>
+      <a href="#ex-eventos"    class="nav-item"><span class="nav-icon">📡</span> Eventos</a>
+      <a href="#ex-multiplas"  class="nav-item"><span class="nav-icon">🗂️</span> Múltiplas Filas</a>
+
+      <div class="nav-section">Referência</div>
+      <a href="#stomp-api"     class="nav-item"><span class="nav-icon">📚</span> API StompClient</a>
+      <a href="#auditoria"     class="nav-item"><span class="nav-icon">🔍</span> Histórico de Auditoria</a>
+    </nav>
+  </aside>
+
+  <!-- ══════════════════ MAIN ══════════════════════ -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+  <main class="main">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-badge">📖 Documentação Técnica</div>
+      <h1>RabbitQueue</h1>
+      <p>
+        Infraestrutura de filas de mensagens para Delphi 12 (Athens) sobre RabbitMQ via protocolo STOMP.
+        Arquitetura orientada a interfaces, thread-safe, com handlers intercambiáveis e sistema de eventos completo.
+      </p>
+      <div class="hero-tags">
+        <span class="tag">Delphi 12 Athens</span>
+        <span class="tag">RabbitMQ 3.5.1+</span>
+        <span class="tag">STOMP Protocol</span>
+        <span class="tag">danieleteti/delphistompclient</span>
+        <span class="tag">Thread-Safe</span>
+        <span class="tag">SOLID</span>
+        <span class="tag">Clean Architecture</span>
+        <span class="tag">GoF Patterns</span>
+      </div>
+    </div>
+
+    <!-- ── VISÃO GERAL ──────────────────────────────────────── -->
+    <section id="visao-geral">
+      <div class="section-header">
+        <div class="section-icon">🏠</div>
+        <h2>Visão Geral</h2>
+      </div>
+
+      <p>
+        O <strong>RabbitQueue</strong> é uma biblioteca Delphi 12 que encapsula toda a complexidade de comunicação
+        com o <strong>RabbitMQ</strong> via protocolo <strong>STOMP</strong>, expondo uma API fluente, orientada
+        a interfaces e totalmente thread-safe para produção e consumo de mensagens em background.
+      </p>
+
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon orange">🎯</div>
+            <div>
+              <div class="card-title">Objetivo Principal</div>
+            </div>
+          </div>
+          <p>Abstrair a infraestrutura de mensageria, permitindo que o código de negócio se concentre apenas na lógica dos handlers, sem conhecer detalhes de protocolo ou threading.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon blue">🔌</div>
+            <div>
+              <div class="card-title">Dependência Externa</div>
+            </div>
+          </div>
+          <p>Utiliza exclusivamente a unit <strong>StompClient</strong> do repositório <a href="https://github.com/danieleteti/delphistompclient" style="color:var(--accent)">danieleteti/delphistompclient</a>. Nenhuma outra dependência externa é necessária.</p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <p>O transporte TCP é feito via <strong>Indy (padrão)</strong>. Para usar Synapse, defina a diretiva de compilação <code>USESYNAPSE</code> no projeto.</p>
+      </div>
+    </section>
+
+    <!-- ── ESTRUTURA DE ARQUIVOS ────────────────────────────── -->
+    <section id="estrutura">
+      <div class="section-header">
+        <div class="section-icon">📁</div>
+        <h2>Estrutura de Arquivos</h2>
+      </div>
+
+      <div class="file-tree">
+        <div><span class="dir">RabbitQueue/</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Types.pas</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="note">← Tipos, enums, records e eventos</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Interfaces.pas</span> &nbsp;&nbsp; <span class="note">← Contratos (abstrações puras)</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Handler.Base.pas</span> &nbsp;<span class="note">← Base abstrata dos handlers</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Connection.pas</span> &nbsp;&nbsp; <span class="note">← Adaptador StompClient</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Worker.pas</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">← Thread worker de background</span></div>
+        <div>&nbsp;&nbsp;├── <span class="file">RabbitQueue.Core.pas</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="note">← Orquestrador central (Facade)</span></div>
+        <div>&nbsp;&nbsp;└── <span class="file">RabbitQueue.Factory.pas</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="note">← Factory de criação</span></div>
+      </div>
+
+      <div class="callout warn" style="margin-top:16px;">
+        <span class="callout-icon">⚠️</span>
+        <p>Adicione ao <em>Search Path</em> do projeto o caminho onde estão os arquivos <strong>StompClient.pas</strong> do repositório danieleteti. Nenhuma outra unit daquele repositório precisa ser referenciada diretamente pelo seu código.</p>
+      </div>
+    </section>
+
+    <!-- ── ARQUITETURA ──────────────────────────────────────── -->
+    <section id="arquitetura">
+      <div class="section-header">
+        <div class="section-icon">🏗️</div>
+        <h2>Arquitetura</h2>
+      </div>
+
+      <p>A solução segue a <strong>Arquitetura Limpa</strong> com separação em camadas bem definidas. As dependências sempre apontam de fora para dentro — nenhuma camada interna conhece detalhes de implementação externa.</p>
+
+      <div class="arch-diagram">
+<span class="ah">┌────────────────────────────────────────────────────────────────────┐</span>
+<span class="ah">│                    CAMADA DE APLICAÇÃO (Seu Código)                  │</span>
+<span class="ah">│              IRabbitQueue  ←  TRabbitQueueFactory                    │</span>
+<span class="ah">└───────────────────────────────┬────────────────────────────────────┘</span>
+                                <span class="ah">│ usa</span>
+<span class="ab">┌───────────────────────────────▼────────────────────────────────────┐</span>
+<span class="ab">│                  CAMADA DE ORQUESTRAÇÃO                             │</span>
+<span class="ab">│                   TRabbitQueue (Facade)                             │</span>
+<span class="ab">│   ┌──────────────────┐  ┌──────────────────┐  ┌────────────────┐  │</span>
+<span class="ab">│   │ IRabbitConnection│  │ IRabbitQueueWorker│  │IRabbitQueueHndl│  │</span>
+<span class="ab">└───┤ (Adapter)        ├──┤ (Observer/Thread) ├──┤ (Strategy)     ├──┘</span>
+    <span class="ag">└────────┬─────────┘</span>  <span class="ap">└──────────────────┘</span>  <span class="ay">└────────────────┘</span>
+             <span class="ag">│ usa</span>                                      <span class="ay">▲ herda</span>
+    <span class="ag">┌────────▼─────────┐</span>                    <span class="ay">┌──────────────────┐</span>
+    <span class="ag">│  StompClient.pas │</span>                    <span class="ay">│ THandlerBase     │</span>
+    <span class="ag">│  (Lib externa)   │</span>                    <span class="ay">│ TAnonymousHandler│</span>
+    <span class="ag">└────────┬─────────┘</span>                    <span class="ay">└──────────────────┘</span>
+             <span class="ag">│ TCP/STOMP</span>
+    <span class="ah">┌────────▼─────────┐</span>
+    <span class="ah">│    RabbitMQ      │</span>
+    <span class="ah">│  Broker Server   │</span>
+    <span class="ah">└──────────────────┘</span>
+      </div>
+    </section>
+
+    <!-- ── PADRÕES ──────────────────────────────────────────── -->
+    <section id="padroes">
+      <div class="section-header">
+        <div class="section-icon">♟️</div>
+        <h2>Padrões de Projeto Aplicados</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon orange">🎭</div>
+            <div><div class="card-title">Facade</div></div>
+          </div>
+          <p><strong>TRabbitQueue</strong> — simplifica o subsistema inteiro (conexão + thread + handlers) em uma única interface coesa.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon blue">🔌</div>
+            <div><div class="card-title">Adapter</div></div>
+          </div>
+          <p><strong>TRabbitConnection</strong> — adapta a API de baixo nível do <em>StompClient</em> para o contrato <em>IRabbitConnection</em> do sistema.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green">♻️</div>
+            <div><div class="card-title">Strategy</div></div>
+          </div>
+          <p><strong>IRabbitQueueHandler</strong> — permite trocar o algoritmo de processamento de cada fila sem alterar o core de orquestração.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple">📐</div>
+            <div><div class="card-title">Template Method</div></div>
+          </div>
+          <p><strong>TRabbitQueueHandlerBase</strong> — define o esqueleto do processamento com hooks <em>DoBeforeExecute</em>, <em>DoExecute</em> e <em>DoAfterExecute</em>.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan">📡</div>
+            <div><div class="card-title">Observer</div></div>
+          </div>
+          <p>Sistema de eventos via <em>reference to procedure</em>: <em>OnEnqueue</em>, <em>OnDequeue</em>, <em>OnBeforeProcess</em>, <em>OnAfterProcess</em>, <em>OnProcessError</em>.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon yellow">🏭</div>
+            <div><div class="card-title">Factory Method</div></div>
+          </div>
+          <p><strong>TRabbitQueueFactory</strong> — centraliza e padroniza a criação de filas e handlers. Expõe um Singleton leve via <em>Instance</em>.</p>
+        </div>
+      </div>
+
+      <h3>Princípios SOLID</h3>
+      <div class="patterns">
+        <div class="pattern-pill"><span>S</span> Cada classe tem uma única responsabilidade</div>
+        <div class="pattern-pill"><span>O</span> Handlers extensíveis sem alterar o core</div>
+        <div class="pattern-pill"><span>L</span> Handlers concretos substituem a base sem quebrar o contrato</div>
+        <div class="pattern-pill"><span>I</span> Interfaces coesas e específicas por responsabilidade</div>
+        <div class="pattern-pill"><span>D</span> Core depende de interfaces, nunca de implementações</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- ── UNIDADES ──────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════ -->
+
+    <!-- TYPES -->
+    <section id="types">
+      <div class="section-header">
+        <div class="section-icon">🔷</div>
+        <h2>RabbitQueue.Types</h2>
+      </div>
+
+      <p>Define todos os tipos compartilhados do sistema: enumerações, records e tipos de eventos. Nenhuma outra unit do projeto deve replicar esses tipos — toda dependência de tipo passa por aqui.</p>
+
+      <h3>Enumerações</h3>
+      <table class="method-table">
+        <thead><tr><th>Tipo</th><th>Valores</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>TQueueItemStatus</code></td>
+            <td><span class="badge badge-blue">qisWaiting</span> <span class="badge badge-yellow">qisProcessing</span> <span class="badge badge-green">qisCompleted</span> <span class="badge badge-red">qisFailed</span> <span class="badge badge-orange">qisRetrying</span></td>
+            <td>Ciclo de vida de um item na fila.</td>
+          </tr>
+          <tr>
+            <td><code>TQueuePriority</code></td>
+            <td><span class="badge badge-blue">qpLow</span> <span class="badge badge-green">qpNormal</span> <span class="badge badge-orange">qpHigh</span> <span class="badge badge-red">qpCritical</span></td>
+            <td>Prioridade mapeada para o header STOMP <em>priority</em> (1, 5, 7, 9).</td>
+          </tr>
+          <tr>
+            <td><code>TProcessResult</code></td>
+            <td><span class="badge badge-green">prSuccess</span> <span class="badge badge-red">prFailure</span> <span class="badge badge-yellow">prRequeue</span></td>
+            <td>Resultado retornado por um handler. Determina se a mensagem será confirmada, descartada ou reenfileirada.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Records</h3>
+      <table class="method-table">
+        <thead><tr><th>Record</th><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="7"><code>TQueueItemInfo</code></td><td><code>MessageId</code></td><td>string</td><td>ID único da mensagem no broker.</td></tr>
+          <tr><td><code>Queue</code></td><td>string</td><td>Nome da fila de origem.</td></tr>
+          <tr><td><code>Body</code></td><td>string</td><td>Conteúdo da mensagem (UTF-8).</td></tr>
+          <tr><td><code>Priority</code></td><td>TQueuePriority</td><td>Prioridade da mensagem.</td></tr>
+          <tr><td><code>RetryCount</code></td><td>Integer</td><td>Número de tentativas de reprocessamento.</td></tr>
+          <tr><td><code>EnqueuedAt</code></td><td>TDateTime</td><td>Timestamp de enfileiramento.</td></tr>
+          <tr><td><code>Status</code></td><td>TQueueItemStatus</td><td>Status atual do item.</td></tr>
+          <tr>
+            <td><code>TRabbitConnectionConfig</code></td>
+            <td colspan="2"><code>Host · Port · VirtualHost · Username · Password · HeartBeat · MaxRetries · RetryDelay</code></td>
+            <td>Parâmetros de conexão. Use <code>TRabbitConnectionConfig.Default</code> para obter valores padrão (localhost:61613).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Tipos de Eventos</h3>
+      <table class="method-table">
+        <thead><tr><th>Tipo</th><th>Assinatura</th><th>Quando dispara</th></tr></thead>
+        <tbody>
+          <tr><td><code>TOnEnqueue</code></td><td><code>procedure(const AItem: TQueueItemInfo)</code></td><td>Após publicar mensagem na fila.</td></tr>
+          <tr><td><code>TOnDequeue</code></td><td><code>procedure(const AItem: TQueueItemInfo)</code></td><td>Após consumir mensagem da fila.</td></tr>
+          <tr><td><code>TOnQueueEmpty</code></td><td><code>procedure(const AQueueName: string)</code></td><td>Quando Receive não retorna mensagem no timeout.</td></tr>
+          <tr><td><code>TOnQueueError</code></td><td><code>procedure(const AQueueName: string; const AError: Exception)</code></td><td>Erros de comunicação ou processamento.</td></tr>
+          <tr><td><code>TOnBeforeProcess</code></td><td><code>procedure(const AItem: TQueueItemInfo)</code></td><td>Antes do handler processar o item.</td></tr>
+          <tr><td><code>TOnAfterProcess</code></td><td><code>procedure(const AItem: TQueueItemInfo; const AResult: TProcessResult)</code></td><td>Após o handler concluir com sucesso.</td></tr>
+          <tr><td><code>TOnProcessError</code></td><td><code>procedure(const AItem: TQueueItemInfo; const AError: Exception; var AShouldRequeue: Boolean)</code></td><td>Quando o handler lança exceção. <em>AShouldRequeue</em> controla reentrega.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- INTERFACES -->
+    <section id="interfaces">
+      <div class="section-header">
+        <div class="section-icon">🔌</div>
+        <h2>RabbitQueue.Interfaces</h2>
+      </div>
+
+      <p>Declara todos os <strong>contratos</strong> do sistema. É a única unit que deve ser referenciada pelo código de aplicação — nenhuma implementação concreta vaza para fora desta camada.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon orange">🎯</div>
+            <div>
+              <div class="card-title">IRabbitQueue</div>
+              <div class="card-unit">Interface principal — Facade</div>
+            </div>
+          </div>
+          <p>Ponto de entrada único. Expõe enfileiramento, gestão de handlers, ciclo de vida do worker e configuração fluente.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon blue">🔗</div>
+            <div>
+              <div class="card-title">IRabbitConnection</div>
+              <div class="card-unit">Contrato de conexão</div>
+            </div>
+          </div>
+          <p>Abstrai toda comunicação com o broker. Permite substituir o StompClient por outro transporte sem impacto nas camadas superiores.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green">⚙️</div>
+            <div>
+              <div class="card-title">IRabbitQueueHandler</div>
+              <div class="card-unit">Contrato de processamento</div>
+            </div>
+          </div>
+          <p>Contrato de processamento de mensagens. Implemente esta interface para definir a lógica de negócio de cada tipo de mensagem.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple">🧵</div>
+            <div>
+              <div class="card-title">IRabbitQueueWorker</div>
+              <div class="card-unit">Contrato do worker thread</div>
+            </div>
+          </div>
+          <p>Gerencia o ciclo de vida da thread de consumo em background. Expõe Start/Stop e todos os setters de eventos.</p>
+        </div>
+      </div>
+
+      <h3>Métodos de IRabbitQueue</h3>
+      <table class="method-table">
+        <thead><tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>RegisterHandler(AHandler)</code></td><td><code>IRabbitQueue</code></td><td>Registra um handler. Fluente — pode encadear.</td></tr>
+          <tr><td><code>UnregisterHandler(AHandlerName)</code></td><td><code>IRabbitQueue</code></td><td>Remove handler pelo nome.</td></tr>
+          <tr><td><code>Enqueue(AQueue, ABody, APriority)</code></td><td><code>IRabbitQueue</code></td><td>Publica mensagem na fila. Fluente.</td></tr>
+          <tr><td><code>Dequeue(AQueueName)</code></td><td><code>void</code></td><td>Consume manualmente um item da fila.</td></tr>
+          <tr><td><code>Purge(AQueueName)</code></td><td><code>void</code></td><td>Drena toda a fila fazendo ACK em cada mensagem.</td></tr>
+          <tr><td><code>Start</code></td><td><code>void</code></td><td>Inicia a thread worker e a conexão com o broker.</td></tr>
+          <tr><td><code>Stop</code></td><td><code>void</code></td><td>Encerra a thread worker e desconecta do broker.</td></tr>
+          <tr><td><code>WithQueue(AQueueName)</code></td><td><code>IRabbitQueue</code></td><td>Adiciona fila ao pool de consumo. Fluente.</td></tr>
+          <tr><td><code>WithPrefetch(ACount)</code></td><td><code>IRabbitQueue</code></td><td>Define quantas mensagens por ciclo. Fluente.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- HANDLER -->
+    <section id="handler">
+      <div class="section-header">
+        <div class="section-icon">⚙️</div>
+        <h2>RabbitQueue.Handler.Base</h2>
+      </div>
+
+      <p>Fornece duas implementações prontas para uso: uma <strong>base abstrata</strong> para herança e um <strong>handler anônimo</strong> para closures.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon orange">📐</div>
+            <div>
+              <div class="card-title">TRabbitQueueHandlerBase</div>
+              <div class="card-unit">Classe abstrata — Template Method</div>
+            </div>
+          </div>
+          <p>Implemente <strong>DoExecute</strong> (obrigatório) e sobrescreva os hooks opcionais <strong>DoBeforeExecute</strong>, <strong>DoAfterExecute</strong> e <strong>DoHandleError</strong> conforme necessidade.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan">λ</div>
+            <div>
+              <div class="card-title">TRabbitAnonymousHandler</div>
+              <div class="card-unit">Classe concreta — Strategy via closure</div>
+            </div>
+          </div>
+          <p>Cria handlers inline sem necessidade de herança. Ideal para lógica simples ou prototipação rápida. Criado via <code>TRabbitQueueFactory.CreateHandler</code>.</p>
+        </div>
+      </div>
+
+      <h3>Hooks de TRabbitQueueHandlerBase</h3>
+      <table class="method-table">
+        <thead><tr><th>Método</th><th>Obrigatório</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td><code>DoExecute(AItem)</code></td><td><span class="badge badge-red">Sim</span></td><td>Lógica principal de processamento. Deve retornar <code>TProcessResult</code>.</td></tr>
+          <tr><td><code>DoBeforeExecute(AItem)</code></td><td><span class="badge badge-green">Não</span></td><td>Hook executado antes de DoExecute. Útil para logging, validação.</td></tr>
+          <tr><td><code>DoAfterExecute(AItem, AResult)</code></td><td><span class="badge badge-green">Não</span></td><td>Hook executado após DoExecute com sucesso. Útil para métricas.</td></tr>
+          <tr><td><code>DoHandleError(AItem, AError)</code></td><td><span class="badge badge-green">Não</span></td><td>Tratamento de erro interno do handler. Padrão: retorna <code>prFailure</code>.</td></tr>
+          <tr><td><code>CanHandle(AQueueName)</code></td><td><span class="badge badge-green">Não</span></td><td>Determina se este handler aceita mensagens da fila informada. Padrão: comparação case-insensitive com a fila registrada.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CONNECTION -->
+    <section id="connection">
+      <div class="section-header">
+        <div class="section-icon">🔗</div>
+        <h2>RabbitQueue.Connection</h2>
+      </div>
+
+      <p>
+        Implementa <strong>IRabbitConnection</strong> adaptando a API do <em>StompClient</em> (danieleteti) para o contrato interno.
+        É thread-safe via <code>TCriticalSection</code> e gerencia o ciclo de vida das subscriptions por fila.
+      </p>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <p><strong>Subscribe por sessão:</strong> O método <code>SubscribeIfNeeded</code> garante que cada fila seja subscrita uma única vez por sessão de conexão, usando um <code>TDictionary</code> interno. Reconexões limpam o dicionário automaticamente.</p>
+      </div>
+
+      <h3>Mapeamento de Prioridade</h3>
+      <table class="method-table">
+        <thead><tr><th>TQueuePriority</th><th>Valor STOMP (header priority)</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">qpLow</span></td><td>1</td></tr>
+          <tr><td><span class="badge badge-green">qpNormal</span></td><td>5</td></tr>
+          <tr><td><span class="badge badge-orange">qpHigh</span></td><td>7</td></tr>
+          <tr><td><span class="badge badge-red">qpCritical</span></td><td>9</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Comportamento do Nack</h3>
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <p>O <em>IStompClient</em> do repositório danieleteti <strong>não possui método Nack nativo</strong>. A estratégia adotada é: para requeue (<code>ARequeue=True</code>), simplesmente não fazer ACK — o broker reentrega automaticamente após o timeout com <code>amClient</code>. Para descarte definitivo (<code>ARequeue=False</code>), faz ACK com header <code>x-dead-letter: true</code>.</p>
+      </div>
+    </section>
+
+    <!-- WORKER -->
+    <section id="worker">
+      <div class="section-header">
+        <div class="section-icon">🧵</div>
+        <h2>RabbitQueue.Worker</h2>
+      </div>
+
+      <p>
+        Implementa o consumo de mensagens em <strong>background</strong> via <code>TThread</code> interna.
+        Gerencia o ciclo de vida da thread, despacha mensagens para os handlers corretos e dispara todos os eventos do sistema.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple">🔒</div>
+            <div><div class="card-title">Thread Safety</div></div>
+          </div>
+          <p>A lista de filas é copiada para um snapshot a cada ciclo via <code>ToArray</code>, liberando o lock durante operações de rede — evita contenção no acesso à fila de nomes.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan">📡</div>
+            <div><div class="card-title">Sincronização de Eventos</div></div>
+          </div>
+          <p>Todos os callbacks de evento são disparados via <code>TThread.Synchronize</code>, garantindo execução na thread principal (VCL/FMX safe).</p>
+        </div>
+      </div>
+
+      <h3>Ciclo do Worker Thread</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">🔄 Fluxo</span>
+          <span class="code-label">TWorkerThread.Execute</span>
+        </div>
+        <div class="code-body">
+<span class="kw">while not</span> Terminated <span class="kw">do</span>
+  Snapshot ← FQueueNames.ToArray   <span class="cm">// cópia thread-safe</span>
+  <span class="kw">for each</span> QueueName <span class="kw">in</span> Snapshot <span class="kw">do</span>
+    Item ← Connection.Receive(QueueName, timeout=<span class="nm">500ms</span>)
+    <span class="kw">if</span> Item.IsEmpty → FireOnQueueEmpty → <span class="kw">continue</span>
+    Handler ← FindHandler(Item.Queue)
+    <span class="kw">if</span> Handler = <span class="kw">nil</span> → Ack(Item) → <span class="kw">continue</span>
+    FireOnBeforeProcess(Item)
+    Result ← Handler.Execute(Item)
+    FireOnAfterProcess(Item, Result)
+    <span class="kw">case</span> Result <span class="kw">of</span>
+      prSuccess → Ack(Item)
+      prFailure → Nack(Item, Requeue=<span class="kw">False</span>)
+      prRequeue → Nack(Item, Requeue=<span class="kw">True</span>)
+  Sleep(<span class="nm">10ms</span>)   <span class="cm">// evita 100% CPU</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CORE -->
+    <section id="core">
+      <div class="section-header">
+        <div class="section-icon">🎯</div>
+        <h2>RabbitQueue.Core</h2>
+      </div>
+
+      <p>
+        Implementa <strong>IRabbitQueue</strong> atuando como <em>Facade</em> sobre a conexão, o worker e os handlers.
+        É a única classe com a qual o código de aplicação interage diretamente (via interface).
+      </p>
+
+      <div class="callout success">
+        <span class="callout-icon">✅</span>
+        <p><strong>Gerenciamento de memória:</strong> <code>FWorker</code> é declarado como <code>IRabbitQueueWorker</code> (interface), garantindo liberação automática por reference count. <code>FHandlers</code> e <code>FQueueNames</code> são objetos (<code>TList</code>) liberados explicitamente no destrutor.</p>
+      </div>
+
+      <h3>Fluent API</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Configuração encadeada</span>
+        </div>
+        <div class="code-body">
+LQueue := TRabbitQueueFactory.Instance.CreateQueue(LConfig)
+  .WithQueue(<span class="st">'fila.email'</span>)
+  .WithQueue(<span class="st">'fila.sms'</span>)
+  .WithQueue(<span class="st">'fila.push'</span>)
+  .WithPrefetch(<span class="nm">5</span>);
+        </div>
+      </div>
+    </section>
+
+    <!-- FACTORY -->
+    <section id="factory">
+      <div class="section-header">
+        <div class="section-icon">🏭</div>
+        <h2>RabbitQueue.Factory</h2>
+      </div>
+
+      <p>Centraliza a criação de instâncias. Expõe um acesso estático via <code>Instance</code> (Singleton leve) e dois métodos factory.</p>
+
+      <table class="method-table">
+        <thead><tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>Instance</code></td>
+            <td><code>IRabbitQueueFactory</code></td>
+            <td>Retorna a instância singleton do factory. Criada na primeira chamada e liberada no <code>finalization</code> da unit.</td>
+          </tr>
+          <tr>
+            <td><code>CreateQueue(AConfig)</code></td>
+            <td><code>IRabbitQueue</code></td>
+            <td>Cria e retorna uma nova instância de <code>TRabbitQueue</code> configurada com os parâmetros fornecidos.</td>
+          </tr>
+          <tr>
+            <td><code>CreateHandler(Name, Queue, Func)</code></td>
+            <td><code>IRabbitQueueHandler</code></td>
+            <td>Cria um <code>TRabbitAnonymousHandler</code> a partir de uma closure. Lança <code>EQueueHandlerException</code> se a função for nil.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- ── EXEMPLOS ──────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════ -->
+
+    <!-- EX BÁSICO -->
+    <section id="ex-basico">
+      <div class="section-header">
+        <div class="section-icon">▶️</div>
+        <h2>Exemplo: Uso Básico</h2>
+      </div>
+
+      <p>Configuração mínima para publicar e consumir mensagens de uma fila com um handler anônimo.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Uso básico — publicar e consumir</span>
+        </div>
+        <div class="code-body">
+<span class="kw">uses</span>
+  RabbitQueue.Factory,
+  RabbitQueue.Interfaces,
+  RabbitQueue.Types;
+
+<span class="kw">var</span>
+  LConfig : <span class="tp">TRabbitConnectionConfig</span>;
+  LQueue  : <span class="tp">IRabbitQueue</span>;
+<span class="kw">begin</span>
+  <span class="cm">// 1. Configuração de conexão</span>
+  LConfig          := <span class="tp">TRabbitConnectionConfig</span>.Default;
+  LConfig.Host     := <span class="st">'localhost'</span>;
+  LConfig.Port     := <span class="nm">61613</span>;
+  LConfig.Username := <span class="st">'guest'</span>;
+  LConfig.Password := <span class="st">'guest'</span>;
+  LConfig.MaxRetries := <span class="nm">3</span>;
+
+  <span class="cm">// 2. Criação via factory com configuração fluente</span>
+  LQueue := <span class="tp">TRabbitQueueFactory</span>.Instance
+    .CreateQueue(LConfig)
+    .WithQueue(<span class="st">'fila.pedidos'</span>)
+    .WithPrefetch(<span class="nm">1</span>);
+
+  <span class="cm">// 3. Handler anônimo para processar pedidos</span>
+  LQueue.RegisterHandler(
+    <span class="tp">TRabbitQueueFactory</span>.Instance.CreateHandler(
+      <span class="st">'PedidosHandler'</span>,
+      <span class="st">'fila.pedidos'</span>,
+      <span class="kw">function</span>(AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>
+      <span class="kw">begin</span>
+        <span class="cm">// Sua lógica de negócio aqui</span>
+        Writeln(<span class="st">'Processando pedido: '</span> + AItem.Body);
+        Result := prSuccess;
+      <span class="kw">end</span>
+    )
+  );
+
+  <span class="cm">// 4. Publicar uma mensagem</span>
+  LQueue.Enqueue(<span class="st">'fila.pedidos'</span>, <span class="st">'{"id":1,"produto":"Notebook"}'</span>);
+
+  <span class="cm">// 5. Iniciar consumo em background</span>
+  LQueue.Start;
+
+  Writeln(<span class="st">'Worker ativo. Pressione ENTER para parar...'</span>);
+  Readln;
+
+  <span class="cm">// 6. Parar o worker</span>
+  LQueue.Stop;
+<span class="kw">end</span>;
+        </div>
+      </div>
+    </section>
+
+    <!-- EX HANDLER CONCRETO -->
+    <section id="ex-handler">
+      <div class="section-header">
+        <div class="section-icon">🧩</div>
+        <h2>Exemplo: Handler Concreto via Herança</h2>
+      </div>
+
+      <p>Para lógica complexa ou reutilizável, crie uma classe herdando de <code>TRabbitQueueHandlerBase</code> e implemente os hooks necessários.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Handler especializado para e-mail</span>
+        </div>
+        <div class="code-body">
+<span class="kw">uses</span>
+  RabbitQueue.Handler.Base,
+  RabbitQueue.Types,
+  System.SysUtils;
+
+<span class="kw">type</span>
+  <span class="tp">TEmailHandler</span> = <span class="kw">class</span>(<span class="tp">TRabbitQueueHandlerBase</span>)
+  <span class="kw">strict protected</span>
+    <span class="cm">/// Lógica principal — OBRIGATÓRIO implementar</span>
+    <span class="kw">function</span> <span class="fn">DoExecute</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>; <span class="kw">override</span>;
+
+    <span class="cm">/// Hook antes do processamento — OPCIONAL</span>
+    <span class="kw">procedure</span> <span class="fn">DoBeforeExecute</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>); <span class="kw">override</span>;
+
+    <span class="cm">/// Hook após o processamento — OPCIONAL</span>
+    <span class="kw">procedure</span> <span class="fn">DoAfterExecute</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+      <span class="kw">const</span> AResult: <span class="tp">TProcessResult</span>); <span class="kw">override</span>;
+
+    <span class="cm">/// Tratamento de erro interno — OPCIONAL</span>
+    <span class="kw">function</span> <span class="fn">DoHandleError</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+      <span class="kw">const</span> AError: Exception): <span class="tp">TProcessResult</span>; <span class="kw">override</span>;
+  <span class="kw">end</span>;
+
+<span class="kw">function</span> <span class="tp">TEmailHandler</span>.<span class="fn">DoExecute</span>(
+  <span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>;
+<span class="kw">begin</span>
+  <span class="cm">// Parse do JSON e envio do e-mail...</span>
+  Writeln(<span class="st">'[EMAIL] Enviando para: '</span> + AItem.Body);
+  Result := prSuccess;
+<span class="kw">end</span>;
+
+<span class="kw">procedure</span> <span class="tp">TEmailHandler</span>.<span class="fn">DoBeforeExecute</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>);
+<span class="kw">begin</span>
+  Writeln(<span class="st">'[LOG] Iniciando: '</span> + AItem.MessageId);
+<span class="kw">end</span>;
+
+<span class="kw">procedure</span> <span class="tp">TEmailHandler</span>.<span class="fn">DoAfterExecute</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+  <span class="kw">const</span> AResult: <span class="tp">TProcessResult</span>);
+<span class="kw">begin</span>
+  Writeln(<span class="st">'[LOG] Concluído. Resultado: '</span> + IntToStr(Ord(AResult)));
+<span class="kw">end</span>;
+
+<span class="kw">function</span> <span class="tp">TEmailHandler</span>.<span class="fn">DoHandleError</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+  <span class="kw">const</span> AError: Exception): <span class="tp">TProcessResult</span>;
+<span class="kw">begin</span>
+  Writeln(<span class="st">'[ERRO] Falha no envio: '</span> + AError.Message);
+  Result := prRequeue; <span class="cm">// recoloca na fila para nova tentativa</span>
+<span class="kw">end</span>;
+
+<span class="cm">// ─── Registro na fila ───────────────────────────────────────────────────</span>
+LQueue.RegisterHandler(
+  <span class="tp">TEmailHandler</span>.Create(<span class="st">'EmailHandler'</span>, <span class="st">'fila.email'</span>)
+);
+        </div>
+      </div>
+    </section>
+
+    <!-- EX HANDLER ANÔNIMO -->
+    <section id="ex-anonimo">
+      <div class="section-header">
+        <div class="section-icon">λ</div>
+        <h2>Exemplo: Handler Anônimo</h2>
+      </div>
+
+      <p>Para cenários simples, use o factory para criar handlers diretamente via closure, sem necessidade de herança.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Handler via closure — Factory</span>
+        </div>
+        <div class="code-body">
+<span class="kw">var</span>
+  LFactory: <span class="tp">IRabbitQueueFactory</span>;
+<span class="kw">begin</span>
+  LFactory := <span class="tp">TRabbitQueueFactory</span>.Instance;
+
+  LQueue.RegisterHandler(
+    LFactory.CreateHandler(
+      <span class="st">'SmsHandler'</span>,     <span class="cm">// nome único do handler</span>
+      <span class="st">'fila.sms'</span>,       <span class="cm">// fila que este handler atende</span>
+      <span class="kw">function</span>(AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>
+      <span class="kw">begin</span>
+        Writeln(<span class="st">'[SMS] Enviando: '</span> + AItem.Body);
+
+        <span class="cm">// Retorne prSuccess, prFailure ou prRequeue</span>
+        Result := prSuccess;
+      <span class="kw">end</span>
+    )
+  );
+
+  <span class="cm">// Publicar com prioridade alta</span>
+  LQueue.Enqueue(
+    <span class="st">'fila.sms'</span>,
+    <span class="st">'{"phone":"+5562999999999","msg":"Código: 4521"}'</span>,
+    qpHigh    <span class="cm">// TQueuePriority</span>
+  );
+<span class="kw">end</span>;
+        </div>
+      </div>
+    </section>
+
+    <!-- EX EVENTOS -->
+    <section id="ex-eventos">
+      <div class="section-header">
+        <div class="section-icon">📡</div>
+        <h2>Exemplo: Configuração de Eventos</h2>
+      </div>
+
+      <p>O sistema de eventos é baseado em <em>reference to procedure</em> (closures). Todos os callbacks são executados na thread principal via <code>TThread.Synchronize</code>.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Todos os eventos disponíveis</span>
+        </div>
+        <div class="code-body">
+<span class="cm">// ── Eventos de fila ───────────────────────────────────────────────────</span>
+
+LQueue.SetOnEnqueue(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara ao publicar uma mensagem (Enqueue)</span>
+  Writeln(<span class="st">'[+] Enfileirado em '</span> + AItem.Queue + <span class="st">': '</span> + AItem.Body);
+<span class="kw">end</span>);
+
+LQueue.SetOnDequeue(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara após um item ser consumido com sucesso</span>
+  Writeln(<span class="st">'[-] Desenfileirado: '</span> + AItem.MessageId);
+<span class="kw">end</span>);
+
+LQueue.SetOnQueueEmpty(<span class="kw">procedure</span>(<span class="kw">const</span> AQueueName: <span class="kw">string</span>)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara quando a fila não tem mensagens no timeout</span>
+  Writeln(<span class="st">'[~] Fila vazia: '</span> + AQueueName);
+<span class="kw">end</span>);
+
+LQueue.SetOnQueueError(<span class="kw">procedure</span>(<span class="kw">const</span> AQueueName: <span class="kw">string</span>;
+  <span class="kw">const</span> AError: Exception)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara em erros de comunicação ou processamento</span>
+  Writeln(<span class="st">'[!] Erro em '</span> + AQueueName + <span class="st">': '</span> + AError.Message);
+<span class="kw">end</span>);
+
+<span class="cm">// ── Eventos de processamento ──────────────────────────────────────────</span>
+
+LQueue.SetOnBeforeProcess(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara ANTES do handler processar o item</span>
+  Writeln(<span class="st">'[>] Iniciando: '</span> + AItem.MessageId);
+<span class="kw">end</span>);
+
+LQueue.SetOnAfterProcess(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+  <span class="kw">const</span> AResult: <span class="tp">TProcessResult</span>)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara APÓS o handler concluir com sucesso</span>
+  <span class="kw">case</span> AResult <span class="kw">of</span>
+    prSuccess : Writeln(<span class="st">'[✓] Processado: '</span> + AItem.MessageId);
+    prFailure : Writeln(<span class="st">'[✗] Descartado: '</span> + AItem.MessageId);
+    prRequeue : Writeln(<span class="st">'[↩] Reenfileirado: '</span> + AItem.MessageId);
+  <span class="kw">end</span>;
+<span class="kw">end</span>);
+
+LQueue.SetOnProcessError(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+  <span class="kw">const</span> AError: Exception; <span class="kw">var</span> AShouldRequeue: Boolean)
+<span class="kw">begin</span>
+  <span class="cm">// Dispara quando o handler lança uma exceção</span>
+  <span class="cm">// AShouldRequeue controla se a mensagem volta para a fila</span>
+  Writeln(<span class="st">'[!!] Falha: '</span> + AError.Message);
+  AShouldRequeue := AItem.RetryCount < <span class="nm">3</span>; <span class="cm">// até 3 tentativas</span>
+<span class="kw">end</span>);
+        </div>
+      </div>
+    </section>
+
+    <!-- EX MÚLTIPLAS FILAS -->
+    <section id="ex-multiplas">
+      <div class="section-header">
+        <div class="section-icon">🗂️</div>
+        <h2>Exemplo: Múltiplas Filas com Prioridades</h2>
+      </div>
+
+      <p>Exemplo completo de produção com múltiplas filas, handlers distintos e publicação com diferentes níveis de prioridade.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Pascal</span>
+          <span class="code-label">Cenário completo de produção</span>
+        </div>
+        <div class="code-body">
+<span class="kw">uses</span>
+  RabbitQueue.Factory,
+  RabbitQueue.Interfaces,
+  RabbitQueue.Types,
+  RabbitQueue.Handler.Base;
+
+<span class="kw">var</span>
+  LConfig  : <span class="tp">TRabbitConnectionConfig</span>;
+  LQueue   : <span class="tp">IRabbitQueue</span>;
+  LFactory : <span class="tp">IRabbitQueueFactory</span>;
+<span class="kw">begin</span>
+  LFactory := <span class="tp">TRabbitQueueFactory</span>.Instance;
+
+  <span class="cm">// ── Conexão ────────────────────────────────────────────────────────────</span>
+  LConfig              := <span class="tp">TRabbitConnectionConfig</span>.Default;
+  LConfig.Host         := <span class="st">'rabbit.meuservidor.com'</span>;
+  LConfig.Username     := <span class="st">'admin'</span>;
+  LConfig.Password     := <span class="st">'s3cr3t'</span>;
+  LConfig.VirtualHost  := <span class="st">'producao'</span>;
+  LConfig.MaxRetries   := <span class="nm">5</span>;
+  LConfig.RetryDelay   := <span class="nm">2000</span>;
+
+  <span class="cm">// ── Configuração fluente ───────────────────────────────────────────────</span>
+  LQueue := LFactory.CreateQueue(LConfig)
+    .WithQueue(<span class="st">'fila.email'</span>)
+    .WithQueue(<span class="st">'fila.sms'</span>)
+    .WithQueue(<span class="st">'fila.push'</span>)
+    .WithQueue(<span class="st">'fila.auditoria'</span>)
+    .WithPrefetch(<span class="nm">3</span>);
+
+  <span class="cm">// ── Handlers ───────────────────────────────────────────────────────────</span>
+  LQueue
+    .RegisterHandler(<span class="tp">TEmailHandler</span>.Create(<span class="st">'EmailHandler'</span>, <span class="st">'fila.email'</span>))
+    .RegisterHandler(LFactory.CreateHandler(<span class="st">'SmsHandler'</span>, <span class="st">'fila.sms'</span>,
+      <span class="kw">function</span>(AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>
+      <span class="kw">begin</span>
+        Writeln(<span class="st">'[SMS] '</span> + AItem.Body);
+        Result := prSuccess;
+      <span class="kw">end</span>))
+    .RegisterHandler(LFactory.CreateHandler(<span class="st">'PushHandler'</span>, <span class="st">'fila.push'</span>,
+      <span class="kw">function</span>(AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>
+      <span class="kw">begin</span>
+        Writeln(<span class="st">'[PUSH] '</span> + AItem.Body);
+        Result := prSuccess;
+      <span class="kw">end</span>))
+    .RegisterHandler(LFactory.CreateHandler(<span class="st">'AuditoriaHandler'</span>, <span class="st">'fila.auditoria'</span>,
+      <span class="kw">function</span>(AItem: <span class="tp">TQueueItemInfo</span>): <span class="tp">TProcessResult</span>
+      <span class="kw">begin</span>
+        Writeln(<span class="st">'[AUDIT] '</span> + AItem.Body);
+        Result := prSuccess;
+      <span class="kw">end</span>));
+
+  <span class="cm">// ── Publicar com diferentes prioridades ───────────────────────────────</span>
+  LQueue
+    .Enqueue(<span class="st">'fila.email'</span>,    <span class="st">'{"to":"user@mail.com","subject":"Boas-vindas"}'</span>)
+    .Enqueue(<span class="st">'fila.sms'</span>,      <span class="st">'{"phone":"+5562999999999","msg":"OTP: 4521"}'</span>,  qpCritical)
+    .Enqueue(<span class="st">'fila.push'</span>,     <span class="st">'{"device":"tok123","title":"Nova msg"}'</span>,        qpNormal)
+    .Enqueue(<span class="st">'fila.auditoria'</span>,<span class="st">'{"action":"LOGIN","user":"rodrigo"}'</span>,          qpLow);
+
+  <span class="cm">// ── Eventos ────────────────────────────────────────────────────────────</span>
+  LQueue.SetOnQueueError(<span class="kw">procedure</span>(<span class="kw">const</span> AQ: <span class="kw">string</span>; <span class="kw">const</span> E: Exception)
+  <span class="kw">begin</span>
+    Writeln(<span class="st">'ERRO em '</span> + AQ + <span class="st">': '</span> + E.Message);
+  <span class="kw">end</span>);
+
+  LQueue.SetOnProcessError(<span class="kw">procedure</span>(<span class="kw">const</span> AItem: <span class="tp">TQueueItemInfo</span>;
+    <span class="kw">const</span> E: Exception; <span class="kw">var</span> ARequeue: Boolean)
+  <span class="kw">begin</span>
+    ARequeue := AItem.RetryCount < LConfig.MaxRetries;
+    Writeln(Format(<span class="st">'Tentativa %d/%d para %s'</span>,
+      [AItem.RetryCount + <span class="nm">1</span>, LConfig.MaxRetries, AItem.MessageId]));
+  <span class="kw">end</span>);
+
+  <span class="cm">// ── Iniciar ────────────────────────────────────────────────────────────</span>
+  LQueue.Start;
+  Writeln(<span class="st">'Sistema ativo. ENTER para encerrar...'</span>);
+  Readln;
+  LQueue.Stop;
+<span class="kw">end</span>;
+        </div>
+      </div>
+    </section>
+
+    <!-- STOMP API -->
+    <section id="stomp-api">
+      <div class="section-header">
+        <div class="section-icon">📚</div>
+        <h2>Referência: API Real do StompClient</h2>
+      </div>
+
+      <p>A tabela abaixo documenta os métodos reais da <code>IStompClient</code> conforme o repositório <strong>danieleteti/delphistompclient</strong> (branch master, última atualização 2022-03-23).</p>
+
+      <div class="callout danger">
+        <span class="callout-icon">🚫</span>
+        <p><strong>Métodos que NÃO existem</strong> na interface real: <code>SetServer</code>, <code>SetUser</code>, <code>SetHeartBeat</code>, <code>WaitForReceipt</code>, <code>Nack</code>. Uso destes nomes causa erro de compilação <em>E2003 Undeclared identifier</em>.</p>
+      </div>
+
+      <table class="method-table">
+        <thead><tr><th>Método Real</th><th>Assinatura</th><th>Observação</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>NewStomp</code></td>
+            <td><code>StompUtils.NewStomp: IStompClient</code></td>
+            <td>Factory function. <strong>Não use</strong> <code>TStompClient.Create</code> diretamente.</td>
+          </tr>
+          <tr>
+            <td><code>Connect</code></td>
+            <td><code>procedure Connect(Host; Port; Login; Passcode; VirtualHost)</code></td>
+            <td>Todos os parâmetros de autenticação são passados aqui. Sem setters separados.</td>
+          </tr>
+          <tr>
+            <td><code>Disconnect</code></td>
+            <td><code>procedure Disconnect</code></td>
+            <td>Encerra a sessão STOMP e o socket TCP.</td>
+          </tr>
+          <tr>
+            <td><code>Send</code></td>
+            <td><code>procedure Send(Destination; Body; Headers: IStompHeaders = nil)</code></td>
+            <td>Destino deve ter prefixo <code>/queue/</code> ou <code>/topic/</code>.</td>
+          </tr>
+          <tr>
+            <td><code>Subscribe</code></td>
+            <td><code>procedure Subscribe(Destination; Ack: TAckMode; Headers: IStompHeaders)</code></td>
+            <td>Deve ser chamado <strong>uma única vez</strong> por fila por sessão.</td>
+          </tr>
+          <tr>
+            <td><code>Receive</code></td>
+            <td><code>function Receive(var Frame: IStompFrame; Timeout: Integer): Boolean</code></td>
+            <td>Retorna <code>True</code> se recebeu frame no timeout. Frame é <code>nil</code> se retornar <code>False</code>.</td>
+          </tr>
+          <tr>
+            <td><code>Ack</code></td>
+            <td><code>procedure Ack(MessageID: string)</code></td>
+            <td><strong>Apenas um parâmetro.</strong> Sem headers. Erro E2010 se passar IStompHeaders.</td>
+          </tr>
+          <tr>
+            <td><code>IsConnected</code></td>
+            <td><code>function IsConnected: Boolean</code></td>
+            <td>Verifica estado da conexão TCP.</td>
+          </tr>
+          <tr>
+            <td><code>NewHeaders</code></td>
+            <td><code>StompUtils.NewHeaders: IStompHeaders</code></td>
+            <td>Cria headers vazios. Encadeie com <code>.Add(Key, Value)</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- AUDITORIA -->
+    <section id="auditoria">
+      <div class="section-header">
+        <div class="section-icon">🔍</div>
+        <h2>Histórico de Auditoria</h2>
+      </div>
+
+      <p>Registro das inconsistências detectadas e corrigidas durante o processo de auditoria de compatibilidade com o repositório real.</p>
+
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Severidade</th>
+            <th>Arquivo</th>
+            <th>Problema Original</th>
+            <th>Correção Aplicada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>uses StompTypes</code> — unit inexistente</td>
+            <td><span class="fixed">uses StompClient</span> — única unit necessária</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>TStompClient.Create</code></td>
+            <td><span class="fixed">StompUtils.NewStomp</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>SetServer / SetUser / SetHeartBeat</code></td>
+            <td><span class="fixed">FStomp.Connect(Host, Port, User, Pass, VHost)</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>WaitForReceipt(timeout, frame)</code> — assinatura errada</td>
+            <td><span class="fixed">Receive(var Frame; Timeout): Boolean</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>FStomp.Nack()</code> — não existe na interface</td>
+            <td><span class="fixed">Estratégia via omissão de ACK (amClient)</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Connection</td>
+            <td><code>FStomp.Ack(id, headers)</code> — E2010 tipos incompatíveis</td>
+            <td><span class="fixed">FStomp.Ack(id)</span> — apenas MessageID</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-orange">Alto</span></td>
+            <td>Connection</td>
+            <td>Subscribe chamado dentro do loop de Receive</td>
+            <td><span class="fixed">SubscribeIfNeeded — uma vez por sessão</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Worker</td>
+            <td><code>FLock.Acquire</code> chamado 2x em Start sem Release — deadlock</td>
+            <td><span class="fixed">try/finally com FLock.Release correto</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-red">Crítico</span></td>
+            <td>Core</td>
+            <td><code>FWorker: TRabbitQueueWorker</code> — E2003 IsRunning</td>
+            <td><span class="fixed">FWorker: IRabbitQueueWorker (interface)</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-orange">Alto</span></td>
+            <td>Core</td>
+            <td><code>FreeAndNil(FWorker)</code> com interface</td>
+            <td><span class="fixed">FWorker := nil — ref count libera</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">Médio</span></td>
+            <td>Core</td>
+            <td>Cast <code>as TRabbitQueueWorker</code> para eventos de fila</td>
+            <td><span class="fixed">Eventos adicionados à IRabbitQueueWorker</span></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-yellow">Médio</span></td>
+            <td>Worker</td>
+            <td>Lock mantido durante operações de rede (IO bloqueante)</td>
+            <td><span class="fixed">Snapshot via ToArray antes do lock de IO</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      <strong style="color:var(--text)">RabbitQueue</strong> &nbsp;·&nbsp;
+      Documentação Técnica v1.0 &nbsp;·&nbsp;
+      Delphi 12 Athens &nbsp;·&nbsp;
+      Gerado em Abril de 2026
+    </div>
+    <div>
+      Dependência: <a href="https://github.com/danieleteti/delphistompclient" target="_blank">danieleteti/delphistompclient</a>
+      &nbsp;·&nbsp;
+      Protocolo: <a href="https://stomp.github.io/" target="_blank">STOMP 1.1</a>
+    </div>
+  </footer>
+  </div>
+
+</div>
+
+<script>
+  // Highlight nav item on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(item => item.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
