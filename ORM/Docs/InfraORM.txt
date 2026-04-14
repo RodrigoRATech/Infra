@@ -1,0 +1,262 @@
+# Objetivo
+Criar um ORM para realizar persistencia em bancos de dados focado em produtividade de desenvolvimento e performance
+
+## Premissas comparativas de outros projetos
+### Code-First: Define your database using Delphi classes.
+1. Scaffolding: Database-First support to generate entities from existing schemas.
+2. Migrations: Database schema version control (migrate:up, migrate:down, migrate:generate).
+3. Fluent Query API: Strongly typed and expressive queries.
+4. Smart Properties: Type-safe query expressions without magic strings. Write u.Age > 18 and get compile-time checks, IntelliSense, and automatic SQL generation. Learn more
+5. Change Tracking: Automatic change tracking and optimized persistence.
+6. Advanced Types: Native support for UUID v7 (Time-Ordered), JSON/JSONB, and Arrays.
+7. DbType Propagation: Explicit control over database types via [DbType] attribute, ensuring data integrity beyond Delphi types.
+8. Legacy Paging Support: Automatic query wrapping (e.g., ROWNUM) for older versions of Oracle and SQL Server.
+9. Multi-Tenancy:
+	Shared Database: Automatic filtering by TenantId.
+	Schema-based Isolation: High-performance isolation via schemas (PostgreSQL search_path, SQL Server prefixing).
+	Tenant per Database: Dynamic connection string resolution based on tenant.
+	Automatic Schema Creation: EnsureCreated automatically sets up per-tenant schemas.
+10. Advanced Querying:
+	FromSql: Execute raw SQL and map results to entities automatically.
+	Multi-Mapping ([Nested]): Dapper-style recursive hydration for complex objects.
+	Pessimistic Locking: Support for FOR UPDATE and UPDLOCK in fluent queries.
+	Stored Procedures: Declarative mapping via [StoredProcedure] and [DbParam].
+11. Inheritance Mapping:
+	Table-Per-Hierarchy (TPH): Full support for base classes and subclasses in a single table.
+	Polymorphic Hydration: Automatic instantiation of the correct subclass during data retrieval.
+	Attribute-based Mapping: Use [Inheritance], [DiscriminatorColumn], and [DiscriminatorValue].
+12. Multi-Database: Fully tested support for SQL Server, PostgreSQL, Firebird, MySQL/MariaDB and SQLite. Oracle in beta.
+13. Dialect Auto-Detection: Deterministic identification via Enum (ddPostgreSQL, etc) for zero-config setup.
+14. Multi-DBConectors
+	FireDAC
+	ZeusDB
+15. High-Performance Drivers:
+	Standard FireDAC Driver: Full-featured with TDataSet compatibility
+	FireDAC Phys Driver: "Bare metal" access bypassing TDataSet for maximum performance
+	Direct access to FireDAC's physical layer (IFDPhysConnection) for ultra-fast queries
+16. Performance: High-Speed Metadata Cache (singleton-based) to minimize reflection overhead.
+
+## ORM de Referência
+1. Dext-ORM (https://github.com/cesarliws/dext)
+2. DMVCFramework (https://github.com/danieleteti/delphimvcframework?tab=readme-ov-file#-data-access--orm)
+2. TMS Aurelus (https://www.tmssoftware.com/site/aurelius.asp?srsltid=AfmBOoo9rRytdoIEp2sJgUTWb5v9LNC81fnSC0Vw8GyUH8yqbGoLDU4o)
+3. ORMBr (https://github.com/HashLoad/ormbr)
+4. Trysil (https://github.com/davidlastrucci/Trysil)
+
+## Arquitetura
+1.Linguagem:  Delphi 12
+2.Banco:      FireDAC, ZeosDB
+3.Cache:      Redis
+4.Mensageria: RabbitMQ
+5.Padrões:    Clean Code + MVC + SOLID + GoF
+
+## Requisitos
+0. Considerar a criação inicialmente de um MVP e eveluções naturais sofisticando ainda mais o módulo
+1. Threadsafe 
+2. Quando possível deverá funcionar em background com o uso de threads
+3. Arquitetura orientada a interfaces
+4. Deverá ser tratado de forma robusta vazamento de memória
+5. Levar em consideração chaves primárias compostas representando estruturas mestre-detalhe hieráquicas
+6. Chaves primárias únicas considerar indicar se utilizará: tipo padrão ou UUID 
+7. Deverá suportar nativamente Autoincremento, GUID, UUID v7;
+8. Deverá suportar nativamente a geração de LOGs (Tracking) de auditoria de alteração de dados;
+9. Deverá suportar nativamente a geração de eventos de operação, onde haverá futuramente um sub-sistema de notificação
+10. O mapeamento será realizado atrávés de CustomAttributes e seu processamento com RTTI, fluent mapping é opcional e não precisa ser desenvolvido em uma 1 fase
+11. Considerando Query fluente e smart properties considerar query builder por nomes fortes gerados por scaffolding/metadados utilizando o conceito de "smart properties"
+12. Migrations pode ser desenvolvido em uma estapa posterior
+13. Scaffolding Database-First considerar inicialmente: entidades + atributos
+14. Lazy loading / relacionamentos: inicialmente relacionamento sem lazy loading automático
+15. Cache inicialmente:
+	15.1 metadados deve ser em memória local evoluindo futuramente se necessário para Redis
+	15.2 Redis entrar depois para: cache de leitura, invalidação distribuída, second-level cache opcional
+	15.3 Redis é um recurso plugin/opcional
+16. RabbitMQ não deverá ser acoplado ao core do ORM, criar pontos de extensão
+17. Logger indicado
+	17.1 Expoe interfaces
+	17.2 Threadsafe
+	17.3 O contrato de escrita de log aceita contexto estruturado
+	17.4 há níveis (Debug, Information, Warning, Error, Fatal)
+18. Async threads
+	18.1 O ORM core ser thread-safe na construção e uso de metadados
+	18.2 sessão/conexão/transação não são compartilhadas entre threads
+	18.3 Async ser por instância isolada de contexto por thread	
+19. Gerenciamento de memória
+	19.1 Interfaces para contratos
+	19.2 Classes concretas com ownership muito bem definido
+	19.3 Evitar ciclos de referência com interfaces
+	19.4 Usar TObjectList<T> com ownership onde fizer sentido
+	19.5 Evitar anonymous methods capturando referências long-lived sem controle	
+
+## Convenção de nomenclatura
+1. Para manter aderência ao ecossistema utilizar como:
+	Infra.ORM
+	Infra.ORM.Core
+	Infra.ORM.FireDAC
+	Infra.ORM.Zeos
+	Infra.ORM.PostgreSQL
+
+## Componentes externos
+1. Para realizar o gerenciamento de filas RabbitMQ utilizar as classes do repositório: https://github.com/RodrigoRATech/Infra/tree/main/RabbitQueue/src
+2. Para realizar o gerenciamento de cache com Redis utilizar as classes do repositório: https://github.com/RodrigoRATech/Infra/tree/main/Cache/src
+3. Para realizar o gerenciamento de Logs utilizar as classes do repositório: https://github.com/RodrigoRATech/Infra/tree/main/Logger/src
+4. Para realizar validação de dados JSONSchema utilizar as classes do respositório: https://github.com/RodrigoRATech/Infra/tree/main/JSONSchema
+5. Para otimização de threads e desacoplamento, principalmente para processamento assincrono, considere utilizar a classe do repositório: https://github.com/RodrigoRATech/Infra/tree/main/Async
+
+## Antes de começar
+1. Buscar sistemas consolidados similares para se orientar no funcionamento;
+2. As regras definidas no resumo do funcionamento não são imutáveis se houver estratégias mas consolidadas ou de melhor desempenho considere discartar estas orientações primárias;
+3. Criar um planejamento do que será feito;
+4. Se ficar algum ponto que seja necessário esclarecimento ou que gerou dúvidas, perguntar antes de gerar qualquer código;
+	
+## Não deve ser criado
+1. Estrutura para gerenciamento de filas no RabbitMQ;
+2. Estrutura para gerenciamento de cache no Redis;
+3. Estrutura para gerenciamento de Logs;
+4. Estrutura para validação de JSONSchema;
+5. Entregar o projeto de uma única vez;
+
+## Erros e falhas
+1. Os erros deverão ser registrados em log
+2. Criar classes de erros próprias para registro das exceções derivadas de TException
+
+## Premissas irrevogáveis
+1.Simplicidade de manutenção
+2.Simplicidade de uso
+3.Produtividade
+4.Performance
+5.Padrões de Projeto (Arquitetura limpa, SOLID, GoF)
+6.Robustez
+7.Escalabilidade
+8.Documentação rica
+
+## Formato das entregas
+1. Arquitetura e roadmap
+2. estrutura de pastas e packages
+3. contratos/interfaces base
+4. núcleo de metadados
+5. persistência CRUD
+6. consultas
+7. integrações opcionais
+8. Testes
+9. Exemplos
+
+### E dentro de cada etapa:
+1. visão arquitetural
+2. decisões
+3. riscos
+4. código
+5. exemplo de uso
+6. próximos passos
+
+## Estratégia preliminar de entrega
+### Fase 0 — definição
+1.alinhar escopo do MVP
+2.fechar bancos e conectores iniciais
+3.definir princípios imutáveis de arquitetura
+
+### Fase 1 — núcleo do ORM
+1.contratos
+2.exceções próprias
+3.integração com logger por adapter
+4.metadados e atributos
+5.cache interno de metadados thread-safe
+6.abstração de conexão/comando/transação
+7.dialeto SQL
+8.CRUD base
+9.Unit of Work / Session
+10.testes iniciais
+
+### Fase 2 — consulta fluente
+1.filtros
+2.ordenação
+3.paginação
+4.includes básicos
+5.SQL builder
+
+### Fase 3 — recursos avançados
+1.change tracking
+2.batch
+3.bulk
+4.cache Redis opcional
+5.hooks e interceptadores
+6.eventos pós-commit
+
+### Fase 4 — ecossistema
+1.migrations
+2.scaffolding
+3.multi-tenancy
+4.herança
+5.stored procedures
+6.multi-mapping
+
+## Padrão inical sugerido
+### Arquitetura base
+1.Core desacoplado de FireDAC/Zeos
+2.conectores em módulos separados
+3.dialetos em módulos separados
+4.cache Redis opcional
+5.RabbitMQ fora do core, via extensão/eventos
+6.logger via adapter
+
+### Thread safety
+1.metadados: singleton thread-safe
+2.contexto/sessão: escopo por operação/request/thread
+3.conexão/transação: nunca compartilhada entre threads
+4.builders imutáveis quando possível
+
+### Performance
+1.reflection apenas no bootstrap/cache
+2.SQL gerado e reutilizado quando possível
+3.prepared statements
+4.parâmetros nomeados
+5.hydration otimizada
+6.evitar RTTI repetitiva em runtime crítico
+
+### Simplicidade
+1.API pequena no começo
+2.sem tentar emular Entity Framework completo logo na primeira fase
+3.sem lazy loading inicial
+4.sem expression tree mirabolante em Delphi
+
+## Escopo do MVP sugerido
+### ordem de implementação:
+1.Mapeamento + metadados
+	atributos
+	resolução de tabela/campos/chave
+	cache de metadados
+2.Conexão + abstração de dialeto
+	FireDAC
+	ZeosDB
+	PostgreSQL/Firebird inicialmente
+3.CRUD básico
+	Insert
+	Update
+	Delete
+	FindById
+	List
+4.Query fluente
+5.Change tracking
+6.Migrations
+7.Scaffolding
+8.Multi-tenancy
+9.Integração com cache/eventos
+10. Stored procedures / herança / multi-mapping
+
+### MVP inicialmente pode ser
+1.metadados
+2.mapeamento por atributos
+3.dialetos
+4.sessão/unidade de trabalho
+5.CRUD
+6.query fluente básica
+7.logging e tratamento de exceções
+8.Bancos prioritário: Firebird, MySQL, PostgreSQL
+
+## Instruções Finais
+1.Utilizar de padrões de projeto, clean code, arquitetura limpa
+2.Evitar utilizar o nome de padrões de projetos em classes e unit fazer isso somente se for necessário para o entendimento da responsabilidade da classe ou unit
+3.Ficar bem atendo a versão de componentes externo e compatibilidade com a versão do delphi 12 por padrão FMX;
+4.Tal estrutura será utilizada em especial em microserviços e backends. Portanto deverá ser extremamento otimizada;
+5.O idioma padrão do módulo é o Portugues Brasil;
+6.Utilizar termos em inglês somente para as palavrar chaves da linguagem, frameworks utilizados ou quando não houver um termo equivalente em Portugês-BR
+7.Os ORMs são referências do que fazer ou do que NÃO fazer

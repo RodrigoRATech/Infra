@@ -1,0 +1,24 @@
+// ── Infra.ORM.Scaffolding.dpk ─────────────────────────────────────────────────
+package Infra.ORM.Scaffolding;
+
+{$DESCRIPTION 'Infra.ORM Scaffolding — Geração de Entidades a partir do Schema'}
+{$LIBSUFFIX '280'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  Infra.ORM.Core,
+  Infra.ORM.FireDAC;
+
+contains
+  Infra.ORM.Scaffolding.Schema.Contratos,
+  Infra.ORM.Scaffolding.Schema.Firebird,
+  Infra.ORM.Scaffolding.Schema.MySQL,
+  Infra.ORM.Scaffolding.Mapeador.Tipo,
+  Infra.ORM.Scaffolding.Gerador.Nome,
+  Infra.ORM.Scaffolding.Gerador.Entidade,
+  Infra.ORM.Scaffolding.Configuracao,
+  Infra.ORM.Scaffolding.Executor;
+
+end.

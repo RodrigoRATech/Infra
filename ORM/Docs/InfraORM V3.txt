@@ -1,0 +1,645 @@
+# Objetivo
+Criar um ORM para realizar persistencia em bancos de dados focado em produtividade de desenvolvimento e performance
+
+## Premissas comparativas de outros projetos
+### Code-First: Define your database using Delphi classes.
+1. Scaffolding: Database-First support to generate entities from existing schemas.
+2. Migrations: Database schema version control (migrate:up, migrate:down, migrate:generate).
+3. Fluent Query API: Strongly typed and expressive queries.
+4. Smart Properties: Type-safe query expressions without magic strings. Write u.Age > 18 and get compile-time checks, IntelliSense, and automatic SQL generation. Learn more
+5. Change Tracking: Automatic change tracking and optimized persistence.
+6. Advanced Types: Native support for UUID v7 (Time-Ordered), JSON/JSONB, and Arrays.
+7. DbType Propagation: Explicit control over database types via [DbType] attribute, ensuring data integrity beyond Delphi types.
+8. Legacy Paging Support: Automatic query wrapping (e.g., ROWNUM) for older versions of Oracle and SQL Server.
+9. Multi-Tenancy:
+	Shared Database: Automatic filtering by TenantId.
+	Schema-based Isolation: High-performance isolation via schemas (PostgreSQL search_path, SQL Server prefixing).
+	Tenant per Database: Dynamic connection string resolution based on tenant.
+	Automatic Schema Creation: EnsureCreated automatically sets up per-tenant schemas.
+10. Advanced Querying:
+	FromSql: Execute raw SQL and map results to entities automatically.
+	Multi-Mapping ([Nested]): Dapper-style recursive hydration for complex objects.
+	Pessimistic Locking: Support for FOR UPDATE and UPDLOCK in fluent queries.
+	Stored Procedures: Declarative mapping via [StoredProcedure] and [DbParam].
+11. Inheritance Mapping:
+	Table-Per-Hierarchy (TPH): Full support for base classes and subclasses in a single table.
+	Polymorphic Hydration: Automatic instantiation of the correct subclass during data retrieval.
+	Attribute-based Mapping: Use [Inheritance], [DiscriminatorColumn], and [DiscriminatorValue].
+12. Multi-Database: Fully tested support for SQL Server, PostgreSQL, Firebird, MySQL/MariaDB and SQLite. Oracle in beta.
+13. Dialect Auto-Detection: Deterministic identification via Enum (ddPostgreSQL, etc) for zero-config setup.
+14. Multi-DBConectors
+	FireDAC
+	ZeusDB
+15. High-Performance Drivers:
+	Standard FireDAC Driver: Full-featured with TDataSet compatibility
+	FireDAC Phys Driver: "Bare metal" access bypassing TDataSet for maximum performance
+	Direct access to FireDAC's physical layer (IFDPhysConnection) for ultra-fast queries
+16. Performance: High-Speed Metadata Cache (singleton-based) to minimize reflection overhead.
+
+## ORM de Referência
+1. Dext-ORM (https://github.com/cesarliws/dext)
+2. DMVCFramework (https://github.com/danieleteti/delphimvcframework?tab=readme-ov-file#-data-access--orm)
+2. TMS Aurelus (https://www.tmssoftware.com/site/aurelius.asp?srsltid=AfmBOoo9rRytdoIEp2sJgUTWb5v9LNC81fnSC0Vw8GyUH8yqbGoLDU4o)
+3. ORMBr (https://github.com/HashLoad/ormbr)
+4. Trysil (https://github.com/davidlastrucci/Trysil)
+
+## Arquitetura
+1.Linguagem:     	Delphi 12
+2.Conexão Banco: 	FireDAC, ZeosDB (Padrão FireDAC)
+3.Bancos de Dados: 	Firebird, MySQL/MariaDB, SQLite, SQL Server, PostgreSQL (Padrão Firebird)
+3.Cache:      	 	Redis
+4.Mensageria:    	RabbitMQ
+5.Padrões:       	Clean Code + MVC + SOLID + GoF
+6.Testes:        	DUnitX
+7.Configurações iniciais: Arquivo de configuração JSON
+
+## Requisitos
+1. Threadsafe 
+2. Quando possível deverá funcionar em background com o uso de threads (Quando possível assincrono)
+3. Arquitetura orientada a interfaces
+4. Deverá ser tratado de forma robusta vazamento de memória
+5. Levar em consideração chaves primárias compostas representando estruturas mestre-detalhe hieráquicas
+6. Chaves primárias únicas considerar indicar se utilizará: tipo padrão ou UUID 
+7. Deverá suportar nativamente Autoincremento, GUID, UUID v7;
+8. Deverá suportar nativamente a geração de LOGs (Tracking) de auditoria de alteração de dados
+8.1 Campos na entidade(CriadoEm, AlteradoEm, AlteradoPor via atributos) + tabela de log para histórico completo;
+9. Deverá suportar nativamente a geração de eventos de operação, onde haverá futuramente um sub-sistema de notificação
+10. O mapeamento será realizado atrávés de CustomAttributes e seu processamento com RTTI, fluent mapping é opcional e não precisa ser desenvolvido em uma 1 fase
+11. Considerando Query fluente e smart properties considerar query builder por nomes fortes gerados por scaffolding/metadados utilizando o conceito de "smart properties"
+12. Migrations pode ser desenvolvido em uma estapa posterior
+13. Scaffolding Database-First considerar inicialmente: entidades + atributos
+13.1 Uma entidade por arquivo .pas
+14. Lazy loading / relacionamentos: inicialmente relacionamento sem lazy loading automático
+15. Cache inicialmente:
+	15.1 metadados deve ser em memória local evoluindo futuramente se necessário para Redis
+	15.2 Redis entrar depois para: cache de leitura, invalidação distribuída, second-level cache opcional
+	15.3 Redis é um recurso plugin/opcional
+16. RabbitMQ não deverá ser acoplado ao core do ORM, criar pontos de extensão
+17. Logger indicado
+	17.1 Expoe interfaces
+	17.2 Threadsafe
+	17.3 O contrato de escrita de log aceita contexto estruturado
+	17.4 há níveis (Debug, Information, Warning, Error, Fatal)
+18. Async threads
+	18.1 O ORM core ser thread-safe na construção e uso de metadados
+	18.2 sessão/conexão/transação não são compartilhadas entre threads
+	18.3 Async ser por instância isolada de contexto por thread	
+19. Gerenciamento de memória
+	19.1 Interfaces para contratos
+	19.2 Classes concretas com ownership muito bem definido
+	19.3 Evitar ciclos de referência com interfaces
+	19.4 Usar TObjectList<T> com ownership onde fizer sentido
+	19.5 Evitar anonymous methods capturando referências long-lived sem controle	
+
+## Convenção de nomenclatura
+1. Para manter aderência ao ecossistema utilizar como:
+	Infra.ORM
+	Infra.ORM.Core
+	Infra.ORM.FireDAC
+	Infra.ORM.Zeos
+	Infra.ORM.PostgreSQL
+
+## Componentes externos
+1. Para realizar o gerenciamento de filas RabbitMQ utilizar as classes do repositório encontrado em: https://github.com/RodrigoRATech/Infra/blob/main/RabbitQueue/src/Infra.RabbitQueue.Interfaces.pas
+unit Infra.RabbitQueue.Interfaces;
+
+interface
+
+uses
+  Infra.RabbitQueue.Types,
+  System.SysUtils,
+  System.Generics.Collections;
+
+type
+  // Forward declarations
+  IRabbitQueueHandler = interface;
+  IRabbitQueue        = interface;
+  IRabbitQueueWorker  = interface;
+  IRabbitConnection   = interface;
+
+  // ──────────────────────────────────────────────
+  //  Handler — processa mensagens da fila
+  // ──────────────────────────────────────────────
+
+  /// <summary>
+  ///   Contrato para handlers de processamento de mensagens.
+  ///   Implemente esta interface para definir o comportamento
+  ///   de cada tipo de mensagem.
+  /// </summary>
+  IRabbitQueueHandler = interface
+    ['{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}']
+    function GetHandlerName: string;
+    function CanHandle(const AQueueName: string): Boolean;
+    function Execute(const AItem: TQueueItemInfo): TProcessResult;
+    property HandlerName: string read GetHandlerName;
+  end;
+
+  // ──────────────────────────────────────────────
+  //  Conexão STOMP
+  // ──────────────────────────────────────────────
+
+  /// <summary>
+  ///   Gerencia o ciclo de vida da conexão com o broker.
+  /// </summary>
+  IRabbitConnection = interface
+    ['{B2C3D4E5-F6A7-8901-BCDE-F12345678901}']
+    function GetIsConnected: Boolean;
+    function GetConfig: TRabbitConnectionConfig;
+    procedure Connect;
+    procedure Disconnect;
+    procedure Send(const ADestination, ABody: string;
+      const APriority: TQueuePriority = qpNormal);
+    function Receive(const ADestination: string;
+      const ATimeoutMs: Integer = 500): TQueueItemInfo;
+    procedure Ack(const AMessageId: string);
+    procedure Nack(const AMessageId: string; const ARequeue: Boolean = True);
+    property IsConnected: Boolean read GetIsConnected;
+    property Config: TRabbitConnectionConfig read GetConfig;
+  end;
+
+  // ──────────────────────────────────────────────
+  //  Worker — thread de background
+  // ──────────────────────────────────────────────
+
+  /// <summary>
+  ///   Thread de processamento em background.
+  /// </summary>
+  IRabbitQueueWorker = interface
+    ['{C3D4E5F6-A7B8-9012-CDEF-123456789012}']
+    function GetIsRunning: Boolean;
+    procedure Start;
+    procedure Stop;
+    procedure SetOnBeforeProcess(const AEvent: TOnBeforeProcess);
+    procedure SetOnAfterProcess(const AEvent: TOnAfterProcess);
+    procedure SetOnProcessError(const AEvent: TOnProcessError);
+    property IsRunning: Boolean read GetIsRunning;
+  end;
+
+  // ──────────────────────────────────────────────
+  //  Fila principal
+  // ──────────────────────────────────────────────
+
+  /// <summary>
+  ///   Contrato principal da fila RabbitMQ.
+  ///   Ponto de entrada para todas as operações.
+  /// </summary>
+  IRabbitQueue = interface
+    ['{D4E5F6A7-B8C9-0123-DEF0-234567890123}']
+
+    // Gestão de handlers
+    function RegisterHandler(const AHandler: IRabbitQueueHandler): IRabbitQueue;
+    function UnregisterHandler(const AHandlerName: string): IRabbitQueue;
+
+    // Operações de fila
+    function Enqueue(const AQueueName, ABody: string;
+      const APriority: TQueuePriority = qpNormal): IRabbitQueue;
+    procedure Dequeue(const AQueueName: string);
+    procedure Purge(const AQueueName: string);
+
+    // Ciclo de vida
+    procedure Start;
+    procedure Stop;
+
+    // Eventos de fila
+    procedure SetOnEnqueue(const AEvent: TOnEnqueue);
+    procedure SetOnDequeue(const AEvent: TOnDequeue);
+    procedure SetOnQueueEmpty(const AEvent: TOnQueueEmpty);
+    procedure SetOnQueueError(const AEvent: TOnQueueError);
+
+    // Eventos de processamento
+    procedure SetOnBeforeProcess(const AEvent: TOnBeforeProcess);
+    procedure SetOnAfterProcess(const AEvent: TOnAfterProcess);
+    procedure SetOnProcessError(const AEvent: TOnProcessError);
+
+    // Fluent — configurações
+    function WithQueue(const AQueueName: string): IRabbitQueue;
+    function WithPrefetch(const ACount: Integer): IRabbitQueue;
+  end;
+
+  // ──────────────────────────────────────────────
+  //  Factory
+  // ──────────────────────────────────────────────
+
+  /// <summary>
+  ///   Factory para criação das instâncias principais.
+  /// </summary>
+  IRabbitQueueFactory = interface
+    ['{E5F6A7B8-C9D0-1234-EF01-345678901234}']
+    function CreateQueue(
+      const AConfig: TRabbitConnectionConfig): IRabbitQueue;
+    function CreateHandler(
+      const AHandlerName: string;
+      const AQueueName: string;
+      const AExecuteProc: TFunc<TQueueItemInfo, TProcessResult>
+    ): IRabbitQueueHandler;
+  end;
+
+implementation
+
+end.
+
+2. Para realizar o gerenciamento de cache com Redis utilizar as classes do repositório encontrado em https://github.com/RodrigoRATech/Infra/blob/main/Cache/src/Infra.Cache.Interfaces.pas
+unit Infra.Cache.Interfaces;
+
+interface
+
+uses
+  System.SysUtils, System.Generics.Collections, System.JSON;
+
+type
+  /// <summary>
+  ///   Estatísticas de uso do cache para monitoramento.
+  /// </summary>
+  TCacheStats = record
+    TotalHits: Int64;
+    TotalMisses: Int64;
+    TotalErrors: Int64;
+    TotalFallbacks: Int64;
+    TotalEvictions: Int64;
+    CurrentKeys: Int64;
+    IsConnected: Boolean;
+    LastConnectionTime: TDateTime;
+    LastErrorTime: TDateTime;
+    LastErrorMessage: string;
+    UptimeSeconds: Int64;
+    function HitRatio: Double;
+    function ToJSON: TJSONObject;
+  end;
+
+  /// <summary>
+  ///   Evento disparado quando ocorrem mudanças relevantes no cache.
+  /// </summary>
+  TCacheEvent = (ceConnected, ceDisconnected, ceReconnected,
+                 ceError, ceFallbackActivated, cePurgeCompleted);
+
+  TCacheEventProc = reference to procedure(AEvent: TCacheEvent; const AMessage: string);
+
+  /// <summary>
+  ///   Strategy: contrato principal de cache (desacoplado de Redis).
+  /// </summary>
+  ICacheStrategy = interface
+    ['{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}']
+    function Get(const AKey: string; out AValue: string): Boolean;
+    procedure Put(const AKey, AValue: string; ATTLSeconds: Integer = 0);
+    function Remove(const AKey: string): Boolean;
+    function Exists(const AKey: string): Boolean;
+    procedure Clear;
+    function GetStats: TCacheStats;
+    procedure SetOnEvent(AProc: TCacheEventProc);
+  end;
+
+  /// <summary>
+  ///   Serializador genérico para objetos.
+  /// </summary>
+  ICacheSerializer = interface
+    ['{B2C3D4E5-F6A7-8901-BCDE-F12345678901}']
+    function SerializeJSON(AValue: TJSONValue): string;
+    function DeserializeJSON(const AData: string): TJSONValue;
+  end;
+
+  /// <summary>
+  ///   Cache manager: contrato de alto nível para operações string e JSON.
+  ///   Métodos genéricos (GetObject<T>, PutObject<T>, GetOrAdd<T>) ficam
+  ///   exclusivamente na classe concreta TCacheManager, pois interfaces
+  ///   Delphi não suportam métodos parameterizados.
+  /// </summary>
+  ICacheManager = interface
+    ['{C3D4E5F6-A7B8-9012-CDEF-123456789012}']
+    function GetString(const AKey: string; out AValue: string): Boolean;
+    procedure PutString(const AKey, AValue: string; ATTLSeconds: Integer = 0);
+
+    function GetJSON(const AKey: string; out AValue: TJSONValue): Boolean;
+    procedure PutJSON(const AKey: string; AValue: TJSONValue; ATTLSeconds: Integer = 0);
+
+    function Remove(const AKey: string): Boolean;
+    function Exists(const AKey: string): Boolean;
+    procedure Clear;
+    function GetStats: TCacheStats;
+    procedure SetOnEvent(AProc: TCacheEventProc);
+  end;
+
+  /// <summary>
+  ///   Monitor de cache para métricas e diagnóstico.
+  /// </summary>
+  ICacheMonitor = interface
+    ['{D4E5F6A7-B8C9-0123-DEFA-234567890123}']
+    function GetStats: TCacheStats;
+    function GetStatsJSON: TJSONObject;
+    function IsHealthy: Boolean;
+    procedure ResetStats;
+    function GetHistoricalStats(ALastMinutes: Integer): TJSONArray;
+    procedure StartCollecting(AIntervalMs: Integer = 5000);
+    procedure StopCollecting;
+  end;
+
+implementation
+
+{ TCacheStats }
+
+function TCacheStats.HitRatio: Double;
+var
+  LTotal: Int64;
+begin
+  LTotal := TotalHits + TotalMisses;
+  if LTotal = 0 then
+    Result := 0
+  else
+    Result := TotalHits / LTotal;
+end;
+
+function TCacheStats.ToJSON: TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  Result.AddPair('totalHits', TJSONNumber.Create(TotalHits));
+  Result.AddPair('totalMisses', TJSONNumber.Create(TotalMisses));
+  Result.AddPair('totalErrors', TJSONNumber.Create(TotalErrors));
+  Result.AddPair('totalFallbacks', TJSONNumber.Create(TotalFallbacks));
+  Result.AddPair('totalEvictions', TJSONNumber.Create(TotalEvictions));
+  Result.AddPair('currentKeys', TJSONNumber.Create(CurrentKeys));
+  Result.AddPair('isConnected', TJSONBool.Create(IsConnected));
+  Result.AddPair('hitRatio', TJSONNumber.Create(HitRatio));
+  Result.AddPair('uptimeSeconds', TJSONNumber.Create(UptimeSeconds));
+  if not LastErrorMessage.IsEmpty then
+    Result.AddPair('lastErrorMessage', LastErrorMessage);
+end;
+
+end.
+
+3. Para realizar o gerenciamento de Logs utilizar as classes do repositório encontrado em https://github.com/RodrigoRATech/Infra/blob/main/Logger/src/Infra.Logger.Interfaces.pas
+unit Infra.Logger.Interfaces;
+
+interface
+
+uses
+  System.Classes,
+  System.JSON,
+  Infra.Logger.Types;
+
+type
+  ILogEntry = interface
+    ['{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}']
+    function GetTimestamp: TDateTime;
+    function GetLevel: TLogLevel;
+    function GetMessage: string;
+    function GetCategory: string;
+    function GetExtraData: TJSONObject;
+    function ToJSON: TJSONObject;
+    function ToJSONString: string;
+
+    property Timestamp: TDateTime read GetTimestamp;
+    property Level: TLogLevel read GetLevel;
+    property Message: string read GetMessage;
+    property Category: string read GetCategory;
+    property ExtraData: TJSONObject read GetExtraData;
+  end;
+
+  ILogHandler = interface
+    ['{B2C3D4E5-F6A7-8901-BCDE-F12345678901}']
+    function GetName: string;
+    function GetEnabledLevels: TLogLevels;
+    procedure SetEnabledLevels(const Value: TLogLevels);
+    procedure Handle(const AEntry: ILogEntry);
+    function IsEnabled(ALevel: TLogLevel): Boolean;
+
+    property Name: string read GetName;
+    property EnabledLevels: TLogLevels read GetEnabledLevels write SetEnabledLevels;
+  end;
+
+  ILogDispatcher = interface
+    ['{C3D4E5F6-A7B8-9012-CDEF-123456789012}']
+    procedure RegisterHandler(const AHandler: ILogHandler);
+    procedure UnregisterHandler(const AHandler: ILogHandler);
+    procedure Dispatch(const AEntry: ILogEntry);
+    procedure ClearHandlers;
+  end;
+
+  ILogQueue = interface
+    ['{D4E5F6A7-B8C9-0123-DEF0-234567890123}']
+    procedure Enqueue(const AEntry: ILogEntry);
+    function Dequeue(out AEntry: ILogEntry): Boolean;
+    function Count: Integer;
+    procedure Clear;
+  end;
+
+  ILogger = interface
+    ['{E5F6A7B8-C9D0-1234-EF01-345678901234}']
+    procedure Log(ALevel: TLogLevel; const AMessage: string; 
+      const ACategory: string = ''; AExtraData: TJSONObject = nil);
+    procedure Debug(const AMessage: string; const ACategory: string = '');
+    procedure Info(const AMessage: string; const ACategory: string = '');
+    procedure Warning(const AMessage: string; const ACategory: string = '');
+    procedure Error(const AMessage: string; const ACategory: string = '');
+    procedure Flush;
+    procedure Shutdown;
+
+    procedure RegisterHandler(const AHandler: ILogHandler);
+    procedure UnregisterHandler(const AHandler: ILogHandler);
+  end;
+
+  IEmailConfig = interface
+    ['{F6A7B8C9-D0E1-2345-F012-456789012345}']
+    function GetSMTPHost: string;
+    function GetSMTPPort: Integer;
+    function GetUsername: string;
+    function GetPassword: string;
+    function GetFromAddress: string;
+    function GetToAddresses: TArray<string>;
+    function GetUseSSL: Boolean;
+
+    property SMTPHost: string read GetSMTPHost;
+    property SMTPPort: Integer read GetSMTPPort;
+    property Username: string read GetUsername;
+    property Password: string read GetPassword;
+    property FromAddress: string read GetFromAddress;
+    property ToAddresses: TArray<string> read GetToAddresses;
+    property UseSSL: Boolean read GetUseSSL;
+  end;
+
+  IPushNotificationConfig = interface
+    ['{A7B8C9D0-E1F2-3456-0123-567890123456}']
+    function GetServerURL: string;
+    function GetAPIKey: string;
+    function GetTimeout: Integer;
+
+    property ServerURL: string read GetServerURL;
+    property APIKey: string read GetAPIKey;
+    property Timeout: Integer read GetTimeout;
+  end;
+
+implementation
+
+end.
+
+4. Para realizar validação de dados JSONSchema utilizar as classes do respositório encontrado em https://github.com/RodrigoRATech/Infra/tree/main/JSONSchema
+5. Para otimização de threads e desacoplamento, principalmente para processamento assincrono, considere utilizar a classe do repositório encontrado em: https://github.com/RodrigoRATech/Infra/blob/main/Async/src/Infra.Async.Interfaces.pas
+unit Infra.Async.Interfaces;
+
+interface
+
+uses System.classes, System.SyncObjs,
+     System.SysUtils, System.Threading;
+
+
+type
+  ICancellationToken = interface(IInterface)
+    ['{CEDD7864-C15C-4254-8BFE-2ED82023FDAD}']
+
+    function GetIsCancellationRequested: Boolean;
+    property IsCancellationRequested: Boolean read GetIsCancellationRequested;
+    procedure ThrowIfCancellationRequested;
+    function WaitForCancellation(Timeout: Cardinal = INFINITE): TWaitResult;
+  end;
+
+  IAsyncTask = interface(ITask)
+    ['{88997766-5544-3322-1100-AABBCCDDEE00}']
+
+  end;
+
+implementation
+
+end.
+
+## Antes de começar
+1. Buscar sistemas consolidados similares para se orientar no funcionamento;
+2. As regras definidas no resumo do funcionamento não são imutáveis se houver estratégias mas consolidadas ou de melhor desempenho considere discartar estas orientações primárias;
+3. Criar um planejamento do que será feito;
+4. Se ficar algum ponto que seja necessário esclarecimento ou que gerou dúvidas, perguntar antes de gerar qualquer código;
+	
+## Não deve ser criado
+1. Estrutura para gerenciamento de filas no RabbitMQ;
+2. Estrutura para gerenciamento de cache no Redis;
+3. Estrutura para gerenciamento de Logs;
+4. Estrutura para validação de JSONSchema;
+5. Entregar o projeto de uma única vez;
+
+## Erros e falhas
+1. Os erros deverão ser registrados em log
+2. Criar classes de erros próprias para registro das exceções derivadas de TException
+
+## Premissas irrevogáveis
+1.Simplicidade de manutenção
+2.Simplicidade de uso
+3.Produtividade
+4.Performance
+5.Padrões de Projeto (Arquitetura limpa, SOLID, GoF)
+6.Robustez
+7.Escalabilidade
+8.Documentação rica
+
+## Formato das entregas
+1. Arquitetura e roadmap
+2. estrutura de pastas e packages
+3. contratos/interfaces base
+4. núcleo de metadados
+5. persistência CRUD
+6. consultas
+7. integrações opcionais
+8. Testes
+9. Exemplos
+
+### E dentro de cada etapa:
+1. visão arquitetural
+2. decisões
+3. riscos
+4. código
+5. exemplo de uso
+6. próximos passos
+
+## Estratégia preliminar de entrega
+### Fase 1 — núcleo do ORM
+1.contratos
+2.exceções próprias
+3.integração com logger por adapter
+4.metadados e atributos
+5.cache interno de metadados thread-safe
+6.abstração de conexão/comando/transação
+7.dialeto SQL
+8.CRUD base
+9.Unit of Work / Session
+10.testes iniciais
+
+### Fase 2 — consulta fluente
+1.filtros
+2.ordenação
+3.paginação
+4.includes básicos
+5.SQL builder
+
+### Fase 3 — recursos avançados
+1.change tracking
+2.batch
+3.bulk
+4.cache Redis opcional
+5.hooks e interceptadores
+6.eventos pós-commit
+
+### Fase 4 — ecossistema
+1.migrations
+2.scaffolding
+3.multi-tenancy
+4.herança
+5.stored procedures
+6.multi-mapping
+
+## Padrão inical sugerido
+### Arquitetura base
+1.Core desacoplado de FireDAC/Zeos
+2.conectores em módulos separados
+3.dialetos em módulos separados
+4.cache Redis opcional
+5.RabbitMQ fora do core, via extensão/eventos
+6.logger via adapter
+
+### Thread safety
+1.metadados: singleton thread-safe
+2.contexto/sessão: escopo por operação/request/thread
+3.conexão/transação: nunca compartilhada entre threads
+4.builders imutáveis quando possível
+
+### Performance
+1.reflection apenas no bootstrap/cache
+2.SQL gerado e reutilizado quando possível
+3.prepared statements
+4.parâmetros nomeados
+5.hydration otimizada
+6.evitar RTTI repetitiva em runtime crítico
+
+### Simplicidade
+1.API pequena no começo
+2.sem tentar emular Entity Framework completo logo na primeira fase
+3.sem lazy loading inicial
+4.sem expression tree mirabolante em Delphi
+
+## Definições complementares
+1.Tipo base de entidade: Entidades devem herdar de uma classe base (TEntity) + Atributos
+	[Table('clientes')]
+	TCliente = class(TEntity)
+
+TEntity como base (traz ID, EntityState e helpers), mas o ORM funciona com qualquer classe que tenha [Table] + [Id]
+
+2.Chave primária composta (mestre-detalhe): Atributos composto na classe
+	[CompositeKey(['pedido_id', 'item_seq'])]
+	TItemPedido = class(TEntity)
+3.Configuração de múltiplos bancos: Default + override explícito
+	Session := Factory.OpenSession;                    // usa default
+	Session := Factory.OpenSession('Analytics');       // banco nomeado
+4.Change Tracking: Opt-in por entidade
+	[TrackChanges]
+	TCliente = class(TEntity)
+5.Contexto do usuário para auditoria:Injetado na SessionFactory
+	Factory.OpenSession(AContext: IUserContext);
+6. Pool de conexões: Os valores padrão do pool (mínimo=3, máximo=10, timeout de acquire=5min) devem vir do orm.config.json com padrões definidos
+7.Scaffolding: Dialeto padrão para geração de entidades Firebird
+8.Async: Future/Promise e Callback (mais complexo, mais flexível)
+9.Nome do arquivo de configuração: infraORM.cfg
+10.tabela de auditoria: tabela única adt_log com uma coluna tabela com o nome da tabela afetada.
+
+## Instruções Finais
+1.Utilizar de padrões de projeto, clean code, arquitetura limpa
+2.Evitar utilizar o nome de padrões de projetos em classes e unit fazer isso somente se for necessário para o entendimento da responsabilidade da classe ou unit
+3.Ficar bem atendo a versão de componentes externo e compatibilidade com a versão do delphi 12 por padrão FMX;
+4.Tal estrutura será utilizada em especial em microserviços e backends. Portanto deverá ser extremamento otimizada;
+5.O idioma padrão das descrições, comentários e mensagens do módulo é o Português Brasil os demais em Inglês para aderência ao vocabulário técnico universal de ORM;
+6.Os ORMs são referências do que fazer ou do que NÃO fazer
+7.Desconsiderar qualquer outra conversa a respeito da construção de um ORM
+8.Criar uma estrutura para gerenciamento de Pool de conexões com o banco para melhor performance (deve suportar múltiplos ConnectionDefs (múltiplos bancos na mesma instância do ORM))

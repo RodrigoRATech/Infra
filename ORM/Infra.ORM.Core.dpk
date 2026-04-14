@@ -1,0 +1,68 @@
+// ── Infra.ORM.Core.dpk ────────────────────────────────────────────────────────
+package Infra.ORM.Core;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS OFF}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'Infra.ORM Core — Contratos, Metadados e Sessão'}
+{$LIBSUFFIX '280'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  vcl;
+
+contains
+  Infra.ORM.Core.Common.Tipos,
+  Infra.ORM.Core.Contracts,
+  Infra.ORM.Core.Exceptions,
+  Infra.ORM.Core.Mapping.Atributos,
+  Infra.ORM.Core.Logging.Contrato,
+  Infra.ORM.Core.Events.Contratos,
+  Infra.ORM.Core.Events.Registro,
+  Infra.ORM.Core.Events.Despachante,
+  Infra.ORM.Core.Events.Sink.Nulo,
+  Infra.ORM.Core.Events.Sink.Log,
+  Infra.ORM.Core.Events.Sink.Tabela,
+  Infra.ORM.Core.Events.Interceptador.Nulo,
+  Infra.ORM.Core.Events.Interceptador.Auditoria,
+  Infra.ORM.Core.Generators.UUID,
+  Infra.ORM.Core.Metadata.Propriedade,
+  Infra.ORM.Core.Metadata.Entidade,
+  Infra.ORM.Core.Metadata.Resolvedor,
+  Infra.ORM.Core.Metadata.Cache,
+  Infra.ORM.Core.Persistence.Validador,
+  Infra.ORM.Core.Persistence.Hidratador,
+  Infra.ORM.Core.Persistence.SqlBuilder,
+  Infra.ORM.Core.Persistence.Executor,
+  Infra.ORM.Core.Persistence.Transacao,
+  Infra.ORM.Core.Query.Filtro,
+  Infra.ORM.Core.Query.Ordenacao,
+  Infra.ORM.Core.Query.Paginacao,
+  Infra.ORM.Core.Query.Construtor,
+  Infra.ORM.Core.Query.Executor,
+  Infra.ORM.Core.Query.Consulta,
+  Infra.ORM.Core.Session.Sessao,
+  Infra.ORM.Core.Session.Fabrica;
+
+end.

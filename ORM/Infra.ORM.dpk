@@ -1,0 +1,18 @@
+// ── Infra.ORM.dpk — Meta-package completo ─────────────────────────────────────
+package Infra.ORM;
+
+{$DESCRIPTION 'Infra.ORM — ORM Completo para Delphi 12 Athens'}
+{$LIBSUFFIX '280'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  Infra.ORM.Core,
+  Infra.ORM.FireDAC,
+  Infra.ORM.Scaffolding;
+
+// Pacote de conveniência — contém todos os módulos
+// Para uso em produção, referencie apenas os pacotes necessários
+
+end.

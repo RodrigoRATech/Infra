@@ -1,0 +1,25 @@
+// ── Infra.ORM.FireDAC.dpk ─────────────────────────────────────────────────────
+package Infra.ORM.FireDAC;
+
+{$DESCRIPTION 'Infra.ORM FireDAC — Conexão Física Firebird + MySQL'}
+{$LIBSUFFIX '280'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  FireDACCommon,
+  FireDAC,
+  Infra.ORM.Core;
+
+contains
+  Infra.ORM.FireDAC.Configuracao,
+  Infra.ORM.FireDAC.Transacao,
+  Infra.ORM.FireDAC.Leitor,
+  Infra.ORM.FireDAC.Comando,
+  Infra.ORM.FireDAC.Conexao,
+  Infra.ORM.FireDAC.Fabrica,
+  Infra.ORM.Firebird.Dialeto,
+  Infra.ORM.MySQL.Dialeto;
+
+end.

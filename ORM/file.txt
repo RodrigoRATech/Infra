@@ -1,0 +1,128 @@
+program BootstrapCompleto;
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils,
+  System.Generics.Collections,
+  System.Rtti,
+  Infra.ORM.Core.Common.Tipos,
+  Infra.ORM.Core.Contracts,
+  Infra.ORM.Core.Mapping.Atributos,
+  Infra.ORM.Core.Session.Fabrica,
+  Infra.ORM.Core.Metadata.Cache,
+  Infra.ORM.FireDAC.Configuracao,
+  Infra.ORM.FireDAC.Fabrica,
+  Infra.ORM.Firebird.Dialeto;
+
+// ── Entidade ─────────────────────────────────────────────────────────────────
+type
+  [Tabela('CLIENTES')]
+  TCliente = class
+  private
+    FId: Int64;
+    FNome: string;
+    FCriadoEm: TDateTime;
+  public
+    [ChavePrimaria] [AutoIncremento] [Coluna('ID')]
+    property Id: Int64 read FId write FId;
+    [Coluna('NOME')] [Obrigatorio] [Tamanho(150)]
+    property Nome: string read FNome write FNome;
+    [Coluna('CRIADO_EM')] [CriadoEm] [SomenteLeitura]
+    property CriadoEm: TDateTime read FCriadoEm write FCriadoEm;
+  end;
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+var
+  GFabrica: IOrmFabricaSessao;
+
+procedure InicializarORM;
+var
+  LConfig: TConfiguracaoConexao;
+  LFabricaConexao: IOrmFabricaConexao;
+  LDialeto: IOrmDialeto;
+begin
+  LConfig := TConfiguracaoFirebird.Criar
+    .Servidor('localhost')
+    .BancoDados('C:\Dados\meu_sistema.fdb')
+    .Usuario('SYSDBA')
+    .Senha('masterkey')
+    .Charset('UTF8')
+    .TimeoutConexao(30)
+    .TimeoutComando(120)
+    .Construir;
+
+  LFabricaConexao := TFabricaConexaoFireDAC.Create(LConfig);
+  LDialeto        := TDialetoFirebird.Create;
+
+  GFabrica := TOrmFabricaSessao.Configurar
+    .UsarConexao(LFabricaConexao)
+    .UsarDialeto(LDialeto)
+    .Construir;
+
+  Writeln('ORM inicializado com sucesso.');
+end;
+
+// ── Exemplos de uso ───────────────────────────────────────────────────────────
+procedure ExecutarExemplos;
+var
+  LSessao: IOrmSessao;
+  LTransacao: IOrmTransacao;
+  LCliente: TCliente;
+  LClientes: TObjectList<TCliente>;
+begin
+  LSessao := GFabrica.CriarSessao;
+
+  // INSERT
+  LTransacao := LSessao.IniciarTransacao;
+  try
+    LCliente      := TCliente.Create;
+    LCliente.Nome := 'Rodrigo';
+
+    LSessao.Inserir(LCliente);
+    LTransacao.Commit;
+
+    Writeln(Format('Inserido: Id=%d | CriadoEm=%s',
+      [LCliente.Id, DateTimeToStr(LCliente.CriadoEm)]));
+  except
+    LTransacao.Rollback;
+    raise;
+  end;
+
+  // SELECT por ID
+  LCliente := LSessao.BuscarPorId<TCliente>(TValue.From<Int64>(LCliente.Id));
+  Writeln(Format('Encontrado: Id=%d | Nome=%s', [LCliente.Id, LCliente.Nome]));
+
+  // UPDATE
+  LTransacao := LSessao.IniciarTransacao;
+  try
+    LCliente.Nome := 'Rodrigo Atualizado';
+    LSessao.Atualizar(LCliente);
+    LTransacao.Commit;
+    Writeln('Atualizado com sucesso.');
+  except
+    LTransacao.Rollback;
+    raise;
+  end;
+
+  // LIST
+  LClientes := LSessao.Listar<TCliente>;
+  try
+    Writeln(Format('Total de clientes: %d', [LClientes.Count]));
+    for LCliente in LClientes do
+      Writeln(Format('  [%d] %s', [LCliente.Id, LCliente.Nome]));
+  finally
+    LClientes.Free;
+  end;
+end;
+
+begin
+  try
+    InicializarORM;
+    ExecutarExemplos;
+  except
+    on E: Exception do
+      Writeln('ERRO: ', E.ClassName, ': ', E.Message);
+  end;
+  Readln;
+end.
